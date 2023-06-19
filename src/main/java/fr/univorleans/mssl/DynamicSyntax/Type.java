@@ -1,5 +1,6 @@
 package fr.univorleans.mssl.DynamicSyntax;
 
+import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.TypeSystem.BorrowChecker;
 import fr.univorleans.mssl.TypeSystem.Environment;
 import fr.univorleans.mssl.TypeSystem.Location;
@@ -795,9 +796,11 @@ public interface Type {
         public boolean TrcSafe(Environment gam) {
             // is enough to verify on of lval because there types are compatible
                 Lval ith = lvals[0];
-                String x = ith.name();
-                Location location = gam.get(x);
-                Type type = location.getType();
+            Pair<Type, Lifetime> location = ith.typeOf(gam);
+            Type type = location.first();
+               // String x = ith.name();
+               // Location location = gam.get(x);
+               // Type type = location.getType();
                 if (type instanceof Trc){
                     return false;
                 }else if (type instanceof Tuples.TuplesType) {
