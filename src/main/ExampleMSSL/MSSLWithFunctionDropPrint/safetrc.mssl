@@ -1,0 +1,9 @@
+{
+let mut x = box(trc(0));
+let mut y = &*x;
+
+let mut a = *y.clone;
+
+let mut b = *x;
+//cooperate;
+}

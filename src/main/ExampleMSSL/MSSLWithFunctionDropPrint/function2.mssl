@@ -1,16 +1,15 @@
- fn th1(mut y:trc<int>)->unit{
-    *y = 1;
-        {
-            let mut x = y.clone;
-        }
+  fn th2(mut x:trc<int>, mut y:trc<int>)->unit{
+
+    }
+ fn th1()->unit{
+    let mut x = box(trc(0));
+        let mut y = *x.clone;
+        spawn(th2(*x.clone,y));
   }
 
 
 //main
 {
-    let mut x =trc(0);
-    {
-        let mut y = x.clone;
-    }
-    spawn(th1(x.clone));
+
+    spawn(th1());
 }
