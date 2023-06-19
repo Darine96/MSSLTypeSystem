@@ -1,0 +1,16 @@
+ fn th1(mut y:trc<int>)->unit{
+    *y = 1;
+        {
+            let mut x = y.clone;
+        }
+  }
+
+
+//main
+{
+    let mut x =trc(0);
+    {
+        let mut y = x.clone;
+    }
+    spawn(th1(x.clone));
+}
