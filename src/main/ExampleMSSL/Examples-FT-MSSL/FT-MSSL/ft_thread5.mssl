@@ -1,0 +1,41 @@
+
+fn th2(mut x:trc<int>)->unit{
+    cooperate;
+    //print (x)
+    cooperate;
+    //print (x)
+    //free(x)
+    }
+
+fn th1(mut x:trc<int>)->unit{
+    //print (x)
+    spawn(th2(x.clone));
+
+  //free(x)
+    }
+
+fn th4(mut x:trc<int>)->unit{
+    cooperate;
+        *x =2;
+
+        //free(x)
+    }
+fn th3(mut x:trc<int>)->unit{
+    *x =1;
+    cooperate;
+    spawn(th4(x.clone));
+
+    //free(x)
+    }
+
+
+
+
+//main
+{
+let mut x = trc(0);
+spawn(th1(x.clone));
+spawn(th3(x.clone));
+
+//free(x)
+}

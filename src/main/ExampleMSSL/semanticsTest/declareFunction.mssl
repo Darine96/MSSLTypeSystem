@@ -1,0 +1,10 @@
+fn f1() -> unit {}
+
+fn f2(mut x : int) -> unit{ x = 1;}
+
+fn f3(mut x: int, mut y: int) -> int { x = y; x;}
+
+{
+    let mut x = 1;
+    let mut y = 2;
+}

@@ -1,0 +1,35 @@
+fn th2(mut x: trc<int>)->unit{
+    cooperate;
+    *x = 1;
+
+    //free(x)
+}
+
+fn th1(mut x: trc<int>)->unit{
+    let mut y = x.clone;
+    spawn(th2(y));
+    *x = 5;
+    cooperate;
+
+    //free(x)
+}
+
+fn th3(mut x: box<trc<int>>, mut y: trc<int>)->unit{
+    *x = y;
+    cooperate;
+
+    //free(x)
+}
+
+{
+    let mut x = trc(1);
+    let mut y = box(x.clone);
+    let mut z = trc(0);
+    //free the content of y before the assignment
+    *y=z.clone;
+    spawn(th1(x.clone));
+    spawn(th3(y, x.clone));
+
+    //free(x)
+    //free(z)
+}

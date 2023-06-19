@@ -1,0 +1,4 @@
+{
+let mut x = (trc(0), box(1));
+let mut y = &x.1;
+}

@@ -1,0 +1,14 @@
+fn f1(mut x: trc<int>, mut y: trc<int>)->unit {
+        let mut a = &x;
+        cooperate;
+
+}
+
+fn f2(mut x: trc<int>)->unit {
+        *x=0;
+}
+
+{
+let mut x = trc(0); let mut y= trc(1);
+spawn(f1(x.clone, y.clone)); spawn(f2(y.clone));
+}

@@ -1,0 +1,7 @@
+{
+  let mut x = box(trc(0));
+  {
+    let mut y = *x.clone;
+    let mut a = x; // error: cannot move out
+    }
+}

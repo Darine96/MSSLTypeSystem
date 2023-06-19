@@ -1,0 +1,7 @@
+{
+//let mut x = trc(box(0));
+//*x = box(1);
+
+let mut y = trc(box(box(0)));
+**y = box(1);
+}

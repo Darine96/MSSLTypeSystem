@@ -1,0 +1,4 @@
+{
+    //let mut y = trc(box(0));
+     let mut x = box(trc(box(0)));
+}

@@ -1,0 +1,6 @@
+fn foo(mut x: int)->unit{
+    let mut y = 1;
+}
+{
+    let mut y = 1;
+}

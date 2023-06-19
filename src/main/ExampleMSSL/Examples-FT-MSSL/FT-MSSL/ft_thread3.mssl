@@ -1,0 +1,20 @@
+fn bar(mut x:trc<int>, mut y:trc<int>)->unit{
+    cooperate;
+    {
+    let mut a = &mut *x;
+    *a = 5;
+    }
+    cooperate;
+    //print the content of x: is equal 5?
+
+    //free(x) and free(y)
+}
+
+//main
+{
+let mut x = trc(0);
+let mut y = trc(1);
+spawn(bar(x.clone,y.clone));
+
+//free(x) and free(y);
+}

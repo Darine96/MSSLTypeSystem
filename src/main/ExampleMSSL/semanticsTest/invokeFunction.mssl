@@ -1,0 +1,5 @@
+fn f2(mut x : int) -> unit{ x = 1;}
+
+{
+
+}

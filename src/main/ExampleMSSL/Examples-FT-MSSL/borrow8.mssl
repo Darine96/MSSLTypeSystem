@@ -1,0 +1,13 @@
+{
+let mut x = box(box(0));
+let mut y = trc(&mut *x);
+
+let mut a = &mut **y;
+**a = 5;
+
+//print x
+
+
+//free y
+
+}

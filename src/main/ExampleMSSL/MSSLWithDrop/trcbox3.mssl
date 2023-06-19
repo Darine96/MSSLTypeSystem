@@ -1,0 +1,4 @@
+{
+    let mut x = trc(box(box(box(0))));
+    let mut y = &mut **x;
+}

@@ -1,0 +1,5 @@
+{
+let mut x = trc(box(0));
+//free to the content of *x
+*x = box(1);
+}

@@ -1,0 +1,21 @@
+fn foo(mut x: trc<int>, mut y: box<trc<int>>, mut z: box<int>)->unit{
+    *x = 1;
+    cooperate;
+}
+
+fn bar(mut x: trc<int>, mut y : int, mut z : trc<int>)->unit{
+    *x = 1;
+    cooperate;
+    spawn(foo(x.clone, box(z.clone), box(1)));
+}
+
+{
+let mut x = trc(0);
+//erreur a regler let mut y=box(trc(1));
+let mut y=trc(1);
+let mut a = box(1);
+
+//spawn(bar(x.clone, a,*y.clone));
+spawn(bar(x.clone, *a,y.clone));
+
+}

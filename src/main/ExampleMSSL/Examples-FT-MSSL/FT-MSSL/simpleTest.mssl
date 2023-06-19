@@ -1,0 +1,7 @@
+{
+let mut x = trc(0);
+{
+let mut y = x.clone;
+}
+
+}

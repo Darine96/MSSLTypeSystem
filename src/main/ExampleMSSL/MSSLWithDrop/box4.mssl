@@ -1,0 +1,3 @@
+{
+    let mut x = box(box(box(0)));
+}

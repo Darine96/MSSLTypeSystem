@@ -1,0 +1,9 @@
+{
+    let mut x = 0;
+    let mut y = 1;
+    {
+    let mut u = &x;
+    u = &y;
+    }
+    let mut z = &x;
+}

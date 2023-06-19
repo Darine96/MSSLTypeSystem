@@ -1,0 +1,6 @@
+{
+let mut x = 0;
+let mut y = 0;
+let mut a = &mut x;
+*a = 1;
+}

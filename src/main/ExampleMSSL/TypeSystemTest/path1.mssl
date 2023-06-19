@@ -1,0 +1,6 @@
+{
+let mut x = box(1);
+let mut a = x;
+{
+let mut y = &*x;}
+}

@@ -1,0 +1,15 @@
+{
+let mut x = 0;
+let mut y = 0;
+
+let mut t1 = &mut x;
+let mut t2 = &y;
+
+let mut a = (&mut t1, &mut t2);
+
+let mut b = 0;
+*a.1 = & b;
+
+let mut d = 0;
+**a.0=d;
+}

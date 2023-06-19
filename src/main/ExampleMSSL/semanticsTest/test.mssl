@@ -1,0 +1,23 @@
+fn f1(mut a: int)-> unit {
+    let mut x = 0;
+    {
+    let mut y = 1;
+    {
+    let mut r = trc(0);
+    }
+    }
+}
+fn f2(mut a: int)-> unit {
+    let mut x = 0;
+    {
+    let mut y = &x;
+    {
+    let mut r = trc(0);
+    r=trc(1);
+    }
+    }
+}
+
+
+{ let mut x = 0; spawn(f1(0)); { let mut b = box(1); spawn(f2(x));} cooperate;
+}

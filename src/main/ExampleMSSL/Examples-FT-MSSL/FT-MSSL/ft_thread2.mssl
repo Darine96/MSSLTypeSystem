@@ -1,0 +1,15 @@
+fn thread1()->unit{
+    //print("hello");
+    cooperate;
+}
+
+fn thread2()->unit{
+    //print(" world!!");
+    cooperate;
+}
+
+//main
+{
+spawn(thread1());
+spawn(thread2());
+}

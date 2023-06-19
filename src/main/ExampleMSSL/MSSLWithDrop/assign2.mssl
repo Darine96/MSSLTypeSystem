@@ -1,0 +1,6 @@
+{
+    let mut x = box(box(0));
+    let mut y = &mut *x;
+    **y=1;
+    print!(**x);
+}

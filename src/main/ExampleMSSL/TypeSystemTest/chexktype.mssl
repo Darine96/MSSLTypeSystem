@@ -1,0 +1,5 @@
+{
+let mut a =box(0);
+let mut b = &mut *a;
+b = 1;
+}

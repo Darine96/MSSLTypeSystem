@@ -1,0 +1,8 @@
+{
+    let mut x = 0;
+    let mut y = trc(&x);
+
+    {
+        let mut a = box(trc(0));
+    }
+}

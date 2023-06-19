@@ -1,0 +1,6 @@
+{
+let mut x = 0;
+let mut y = 0;
+let mut a = (&mut x , &mut y);
+*a.0 = 1;
+}

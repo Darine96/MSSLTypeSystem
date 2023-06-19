@@ -1,0 +1,9 @@
+{
+    let mut x = 0;
+    let mut y = trc(&mut x);
+    **y=1;
+
+    let mut z = box(y);
+    let mut a = 2;
+
+}

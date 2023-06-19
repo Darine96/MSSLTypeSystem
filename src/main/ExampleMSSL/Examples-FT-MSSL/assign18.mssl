@@ -1,0 +1,9 @@
+{
+let mut x = 0;
+ let mut y = &x;
+ let mut z = box(box(&y));
+ let mut e = box(box(&*y));
+ let mut f = 1;
+ e = box(box(&f));
+
+}

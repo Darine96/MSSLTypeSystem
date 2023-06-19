@@ -1,0 +1,8 @@
+fn foo(mut x: trc<int>, mut y : box<trc<int>>)->unit{
+    *y = x;
+}
+
+{
+    let mut a = trc(0);
+    let mut b = box(trc(1));
+}

@@ -1,0 +1,6 @@
+{
+let mut x = trc(0);
+{let mut a = &mut *x;
+*a = 5;
+}
+}

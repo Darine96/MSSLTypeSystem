@@ -1,0 +1,9 @@
+fn foo(mut x: trc<int>)->unit{
+    *x = 1;
+    cooperate;
+}
+
+{
+let mut x = trc(1);
+spawn(foo(x.clone));
+}

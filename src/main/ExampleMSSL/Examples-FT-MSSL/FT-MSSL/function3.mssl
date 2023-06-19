@@ -1,0 +1,17 @@
+fn foo(mut x: trc<int>, mut y: box<trc<int>>)->unit{
+        *y = x;
+        cooperate;
+
+}
+
+fn far( mut x: int, mut y: trc<int>)->unit{
+    *y = 1;
+    cooperate;
+}
+
+{
+    let mut x = trc(0);
+    let mut y = box(trc(1));
+    let mut z = x.clone;
+    let mut a = 1;
+}

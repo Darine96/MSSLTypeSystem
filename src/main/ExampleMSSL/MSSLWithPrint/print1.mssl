@@ -1,0 +1,5 @@
+{
+    let mut x = 1;
+    print!(*x);
+    let mut z = 1;
+}

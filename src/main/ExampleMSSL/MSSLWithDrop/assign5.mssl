@@ -1,0 +1,7 @@
+{
+    let mut x = box(box(trc(box(0))));
+    let mut y = trc(box(0));
+
+    let mut a = y.clone;
+    a = y.clone;
+}

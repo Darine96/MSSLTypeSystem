@@ -1,0 +1,4 @@
+{
+let mut x = trc(1);
+let mut a = &x;
+}

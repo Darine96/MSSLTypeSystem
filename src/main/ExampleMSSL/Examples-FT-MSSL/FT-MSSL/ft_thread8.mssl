@@ -1,0 +1,47 @@
+fn th2(mut x:trc<int>)->unit{
+    {
+        let mut a = &mut *x;
+        *a = 1;
+    }
+    cooperate;
+     {
+            let mut a = &mut *x;
+            *a = 2;
+        }
+    cooperate;
+     {
+            let mut a = &mut *x;
+            *a = 3;
+        }
+    cooperate;
+     {
+            let mut a = &mut *x;
+            *a = 4;
+        }
+
+    //free(x)
+    }
+
+fn th1(mut y:box<trc<int>>)->unit{
+
+    let mut x = *y;
+    //print (x)
+    cooperate;
+    spawn(th2(x.clone));
+    //print (x)
+    cooperate;
+    //print (x)
+    cooperate;
+    //print (x)
+
+    //free(x) and free(y)
+    }
+
+//main
+{
+let mut x = trc(0);
+let mut y = box(x.clone);
+spawn(th1(y));
+
+//free(x)
+}

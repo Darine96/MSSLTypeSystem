@@ -1,0 +1,4 @@
+{
+let mut x = (trc(0), trc(1));
+cooperate;
+}
