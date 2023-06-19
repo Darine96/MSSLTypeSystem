@@ -443,7 +443,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         // second premise
         // verified that the type type doesn't contains a trc type
         try {
-            check(containsTrc(gam2, type), "this type contains a trc type ");
+            check(containsTrc(gam2, type), "this type contains a Trc type ");
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }
@@ -481,7 +481,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }
-        //opmega has the type Trc?
+        //omega has the type Trc?
         try {
             check(!(T instanceof Type.Trc), omega.name()+"  does not have the Trc type");
         } catch (ExceptionsMSG e) {
@@ -501,7 +501,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     @Override
     protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Cooperate expression) {
         try {
-            check(!SafeTrc(gam), "It is exist a shared data borrowed, then is not safe to cooperate!");
+            check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }
