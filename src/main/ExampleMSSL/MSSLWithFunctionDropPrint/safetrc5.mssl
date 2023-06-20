@@ -1,0 +1,6 @@
+{
+let mut x = box(trc(0));
+let mut a = *x.clone;
+let mut b = *x;
+
+}
