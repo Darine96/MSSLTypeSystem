@@ -796,12 +796,12 @@ public interface Type {
         public boolean TrcSafe(Environment gam) {
             // is enough to verify on of lval because there types are compatible
                 Lval ith = lvals[0];
-            Pair<Type, Lifetime> location = ith.typeOf(gam);
-            Type type = location.first();
-               // String x = ith.name();
-               // Location location = gam.get(x);
-               // Type type = location.getType();
-                if (type instanceof Trc){
+            /*Pair<Type, Lifetime> location = ith.typeOf(gam);
+            Type type = location.first();*/
+            String x = ith.name();
+            Location location = gam.get(x);
+            Type type = location.getType();
+                if (type instanceof Trc || ContainsTrc(gam)){
                     return false;
                 }else if (type instanceof Tuples.TuplesType) {
                     return !((Tuples.TuplesType) type).containsTrc();
