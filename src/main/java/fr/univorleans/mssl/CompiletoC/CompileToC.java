@@ -2,7 +2,7 @@ package fr.univorleans.mssl.CompiletoC;
 
 import com.google.common.base.CharMatcher;
 import fr.univorleans.mssl.DynamicSyntax.*;
-import fr.univorleans.mssl.DynamicSyntax.Syntax.*;
+import fr.univorleans.mssl.DynamicSyntax.Syntax.Expression;
 import fr.univorleans.mssl.MSSL.Main;
 import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.TypeSystem.Environment;
@@ -648,7 +648,8 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             // (0.1) create a fresh variable is necessary
             String[] args = fresh_argments(name, arguments);
             //(1) create a struct
-            String node = "__" + name;
+           // String node = "__" + name;
+            String node = "__th" + NBthreads;
             nodeNumbers+=1;
             if(arguments.length!=0) {
                 try {
