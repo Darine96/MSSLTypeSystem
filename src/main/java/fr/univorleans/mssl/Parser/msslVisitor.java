@@ -214,6 +214,27 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitInstExpr(msslParser.InstExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code InstEmit}
+	 * labeled alternative in {@link msslParser#instruction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInstEmit(msslParser.InstEmitContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code InstWhen}
+	 * labeled alternative in {@link msslParser#instruction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInstWhen(msslParser.InstWhenContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code InstSig}
+	 * labeled alternative in {@link msslParser#instruction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInstSig(msslParser.InstSigContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code InstBlock}
 	 * labeled alternative in {@link msslParser#instruction}.
 	 * @param ctx the parse tree
