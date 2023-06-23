@@ -994,32 +994,84 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         return false;
     }
 
-    /********************* SafeTrc ****************************************************/
+    /********************* SafeTrc and traversTrc****************************************************/
 
     protected boolean SafeTrc(Environment gam) {
         // Check whether any acyive Trc type is borrowed in the current environment
-        for (Location cell : gam.cells()) {
+        /*for (Location cell : gam.cells()) {
             Type type = cell.getType();
             if (!type.TrcSafe(gam)) {
                 return false;
             }
         }
+        return true;*/
+        for (Location cell : gam.cells()) {
+            Type type = cell.getType();
+            Pair<Boolean, Type> C = type.ContainsRef(gam);
+            if (C.first()) {
+                Type.Borrow B = (Type.Borrow) C.second();
+                Lval w = B.lvals()[0];
+                Location Cx = gam.get(w.name());
+                Boolean travers =  traversTrc(gam, Cx.getType(), w.path(), 0);
+                if (travers){
+                    return false;
+                }
+            }
+        }
         return true;
-    }
 
+    }
+    protected boolean traversTrc(Environment R, Type T, Path p, int i) {
+        if (p.size() == i) {
+            // Done.
+            return false;
+        } else if (T instanceof Type.Box ) {
+            Type.Box B = (Type.Box) T;
+            // Check path element is dereference
+            Path.Deref d = (Path.Deref) p.get(i);
+            // Continue writing
+            return traversTrc(R, B.getType(), p, i + 1);
+        } else if (T instanceof Type.Trc ) {
+           return true;
+        } else if (i < p.size() && T instanceof Tuples.TuplesType) {
+            Path.Element ith = p.get(i);
+            if (ith instanceof Tuples.TuplesIndex) {
+                Tuples.TuplesType _T = (Tuples.TuplesType) T;
+                Type[] ts = _T.getTypes();
+                int index = ((Tuples.TuplesIndex) p.get(i)).getIndex();
+                if (index < ts.length) {
+                    return traversTrc(R, ts[index], p, i + 1);
+                }
+            }
+            //affohcer une erreur
+            return traversTrc(R, T, p, i);
+        }
+        // Default fallback
+        else if (T instanceof Type.Borrow) {
+            Type.Borrow t = (Type.Borrow) T;
+            // Check path element is dereference
+            Path.Deref d = (Path.Deref) p.get(i);
+            Lval[] borrows = t.lvals();
+            // Determine type of first borrow
+            Type Tj = borrows[0].typeOf(R).first();
+            // NOTE: is safe to ignore other lvals because every lval must have a compatible
+            // type.
+                return traversTrc(R, Tj, p, i + 1);
+
+        } else {//clone
+            return false;
+        }
+    }
 /******************************** Mut and Mutable *******************************************************/
 protected boolean mut(Environment R, Lval w) {
-    // NOTE: can assume here that declaration check on lv.name() has already
-    // occurred. Hence, Cx != null
     Location Cx = R.get(w.name());
-    //
+    // Done
     return mutable(R, Cx.getType(), w.path(), 0);
 }
 
     protected boolean mutable(Environment R, Type T, Path p, int i) {
         if (p.size() == i) {
-            // NOTE: Can always write to the top-level, but cannot read if its been moved
-            // previously.
+            // Done.
             return true;
         } else if (T instanceof Type.Box ) {
             Type.Box B = (Type.Box) T;

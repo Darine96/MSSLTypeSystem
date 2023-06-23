@@ -100,6 +100,13 @@ public interface Type {
     public boolean ContainsTrc(Environment gam);
 
     /**
+     * determine if this type contains a borrow type
+     * @param gam
+     * @return
+     */
+    public Pair<Boolean, Type> ContainsRef(Environment gam);
+
+    /**
      *
      * @param name variable
      * @param i counter if *
@@ -203,6 +210,11 @@ public interface Type {
         }
 
         @Override
+        public Pair<Boolean, Type> ContainsRef(Environment gam) {
+            return new Pair<>(false, this);
+        }
+
+        @Override
         public String free(String name, int i, String free, int pos) {
             return free;
         }
@@ -296,6 +308,11 @@ public interface Type {
         @Override
         public boolean ContainsTrc(Environment gam) {
             return type.ContainsTrc(gam);
+        }
+
+        @Override
+        public Pair<Boolean, Type> ContainsRef(Environment gam) {
+            return type.ContainsRef(gam);
         }
         @Override
         public Type returnClone(Environment gam) {
@@ -405,8 +422,8 @@ public interface Type {
         }
 
         @Override
-        public boolean ContainsTrc(Environment gam) {
-            return true;
+        public Pair<Boolean, Type> ContainsRef(Environment gam) {
+            return type.ContainsRef(gam);
         }
         
         public int positionTrc(Environment gam){
@@ -824,6 +841,11 @@ public interface Type {
             Location location = gam.get(x);
             Type type = location.getType();
             return type.ContainsTrc(gam);
+        }
+
+        @Override
+        public Pair<Boolean, Type> ContainsRef(Environment gam) {
+            return new Pair<>(true, this);
         }
 
         @Override

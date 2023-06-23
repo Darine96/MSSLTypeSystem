@@ -73,9 +73,9 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
          * R-BlockB apply drop, then after the execution of the
          * outer block we have all values in the heap are removed
          */
-        System.out.printf("\n heap is empty? : "+state.first().isHeapEmpty()+"\n");
+        System.out.printf("\n Are all values dropped into the heap? : "+state.first().isHeapEmpty()+"\n");
         if(!state.first().isHeapEmpty()) {
-            throw new RuntimeException("memory leak detected: " + state.first());
+            throw new RuntimeException("Memory leak? : " + state.first());
         }
         return e;
     }
