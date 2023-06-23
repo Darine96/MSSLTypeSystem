@@ -1,0 +1,5 @@
+{
+    let mut x = box(trc(1));
+    let mut y = box(&*x);
+    cooperate;
+}
