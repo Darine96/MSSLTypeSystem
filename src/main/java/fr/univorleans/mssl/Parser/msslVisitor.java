@@ -228,6 +228,13 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitInstWhen(msslParser.InstWhenContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code InstWatch}
+	 * labeled alternative in {@link msslParser#instruction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInstWatch(msslParser.InstWatchContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code InstSig}
 	 * labeled alternative in {@link msslParser#instruction}.
 	 * @param ctx the parse tree
