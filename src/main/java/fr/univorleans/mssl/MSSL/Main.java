@@ -73,14 +73,14 @@ public class Main {
                 /**************** Borrow checker and typing rules ********/
                 BorrowCheckerFunction typingFunction = new BorrowCheckerFunction(false, "Declaration", visitor.declarations);
                 typingFunction.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, visitor.declarations);
-                /** stock the number of threads created into functions **/
+                //stock the number of threads created into functions
                 int functionNBthreads = getNBthreads();
                 BorrowChecker typing =  new BorrowChecker(false, "Declaration", visitor.declarations);
                 //System.out.printf("\n block "+ block.toString());
                 typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block);
                 /*******************************************************/
                 /**************** Semantics and reduction rules ********/
-              /*  OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
+                OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
                 Pair<StoreProgram.State, Expression> state = new Pair<>(new StoreProgram.State(),visitor.block);
                 Expression result = new OperationalSemantics(globalLifetime, opf.getFunctions()).execute(globalLifetime, state.second());
 

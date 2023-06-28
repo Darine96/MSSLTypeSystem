@@ -37,8 +37,8 @@ void foo(void* args){
 	 ft_thread_cooperate();
 	Trc _1= _clone_trc (x);
 	Trc _2= _clone_trc (*y);
-	__bar = add_value_indetermine(1, _1, _2);
-	_th3 = ft_thread_create(sched,bar,NULL,__bar);
+	__th3 = add_value_indetermine(1, _1, _2);
+	_th3 = ft_thread_create(sched,bar,NULL,__th3);
 	 ft_thread_cooperate();
 printf("*x = %i",*((int*)_get_value(x)));
 	_destroy(x);
@@ -72,11 +72,11 @@ int main(int argc, char const *argv[]){
 	Trc _8= _clone_trc(y);
 	Trc * _9 = malloc(sizeof(Trc));
 	*_9 = _8;
-	__foo = add_value_indetermine(1, _7, _9);
-	_th2 = ft_thread_create(sched,foo,NULL,__foo);
+	__th2 = add_value_indetermine(1, _7, _9);
+	_th2 = ft_thread_create(sched,foo,NULL,__th2);
 	Trc _10= _clone_trc (x);
-	__foofoo = add_value_indetermine(0, _10);
-	_th1 = ft_thread_create(sched,foofoo,NULL,__foofoo);
+	__th1 = add_value_indetermine(0, _10);
+	_th1 = ft_thread_create(sched,foofoo,NULL,__th1);
 	ft_scheduler_start (sched);
 	pthread_join (ft_pthread(_th1),&retval);
 	ft_free(_th1);

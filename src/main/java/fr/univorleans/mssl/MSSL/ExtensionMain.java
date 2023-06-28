@@ -3,15 +3,15 @@ package fr.univorleans.mssl.MSSL;
 import fr.univorleans.mssl.CompiletoC.CompileToC;
 import fr.univorleans.mssl.DynamicParser.MyvisitorBlock;
 import fr.univorleans.mssl.DynamicSyntax.Lifetime;
-import fr.univorleans.mssl.DynamicSyntax.Syntax;
-import fr.univorleans.mssl.Parser.msslLexer;
-import fr.univorleans.mssl.Parser.msslParser;
+import fr.univorleans.mssl.DynamicSyntax.Syntax.*;
 import fr.univorleans.mssl.SOS.OperationalSemantics;
 import fr.univorleans.mssl.SOS.OperationalSemanticsFunction;
 import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.SOS.StoreProgram;
 import fr.univorleans.mssl.TypeSystem.BorrowChecker;
 import fr.univorleans.mssl.TypeSystem.BorrowCheckerFunction;
+import fr.univorleans.mssl.Parser.msslLexer;
+import fr.univorleans.mssl.Parser.msslParser;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -25,7 +25,7 @@ public class ExtensionMain {
             System.out.println(str.length());
         }
     }*/
-    static private String source;
+    static private String source="";
     static private int NBthreads;
 
     public static int getNBthreads() {
@@ -64,11 +64,13 @@ public class ExtensionMain {
 
             MyvisitorBlock visitor = new MyvisitorBlock(globalLifetime);
             visitor.visit(tree);
-            Syntax.Expression.Block block = visitor.block;
+            Expression.Block block = visitor.block;
             for (int i = 0; i < visitor.declarations.size(); i++) {
                 System.out.printf("\n Function " + visitor.declarations.get(i).toString() + "\n");
             }
-            System.out.printf("\n block in ExtesnionMain " + block.toString());
+            System.out.printf("\n block " + block.toString());
+            /*******************************************************/
+            /**************** Borrow checker and typing rules ********/
             /*******************************************************/
             /**************** Borrow checker and typing rules ********/
             BorrowCheckerFunction typingFunction = new BorrowCheckerFunction(false, "Declaration", visitor.declarations);
@@ -80,19 +82,20 @@ public class ExtensionMain {
             typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block);
             /*******************************************************/
             /**************** Semantics and reduction rules ********/
-            OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
-            Pair<StoreProgram.State, Syntax.Expression> state = new Pair<>(new StoreProgram.State(),visitor.block);
-            Syntax.Expression result = new OperationalSemantics(globalLifetime, opf.getFunctions()).execute(globalLifetime, state.second());
-
+         /*   OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
+            Pair<StoreProgram.State, Expression> state = new Pair<>(new StoreProgram.State(),visitor.block);
+            Expression result = new OperationalSemantics(globalLifetime, opf.getFunctions()).execute(globalLifetime, state.second());
             /*****************************************************************/
             /**************** Compiler To C to execute in fairthreads ********/
-           // CompileToC compileToC = new CompileToC(visitor.declarations, typingFunction.getEnvFunctions(), typing.getGlobal(), getNBthreads() );
-           // CompileToC.debut_code();
-           // compileToC.execute(block);
+            CompileToC compileToC = new CompileToC(visitor.declarations, typingFunction.getEnvFunctions(), typing.getGlobal(), getNBthreads() );
+            CompileToC.debut_code();
+            compileToC.execute(block);
         } catch (Exception e) {
+
             throw new RuntimeException(e);
         }
     }
+
 
 }
 // gradle build

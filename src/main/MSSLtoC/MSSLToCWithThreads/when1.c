@@ -4,6 +4,11 @@
 #include<stdbool.h>
 #include<stdio.h>
 #include<string.h>
+ft_scheduler_t sched;
+ft_thread_t _th1;
+struct node *__th1;
+ft_thread_t _th2;
+struct node *__th2;
 
 void f1(void* args){	
 	ft_event_t s1 = (ft_event_t ) get_value(args,0);	
@@ -40,9 +45,19 @@ static void* arr[]= {};
 }
 
 int main(int argc, char const *argv[]){	
+	void *retval;
+	sched = ft_scheduler_create ();
 	 ft_event_t s1 = ft_event_create (sched);
-	_th0 = ft_thread_create(sched,f1,NULL,NULL);
-	_th-1 = ft_thread_create(sched,f2,NULL,NULL);
+	__th2 = add_value_indetermine(0, s1);
+	_th2 = ft_thread_create(sched,f1,NULL,__th2);
+	__th1 = add_value_indetermine(0, s1);
+	_th1 = ft_thread_create(sched,f2,NULL,__th1);
+	ft_scheduler_start (sched);
+	pthread_join (ft_pthread(_th1),&retval);
+	ft_free(_th1);
+	pthread_join (ft_pthread(_th2),&retval);
+	ft_free(_th2);
+	ft_scheduler_free(sched);
 	free_node(__th2);
 	free_node(__th1);
 	

@@ -3,10 +3,10 @@ grammar mssl;
 
 program: declaration* block EOF                                                         #Prog
        ;
-declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT signature block                   #Declaration_function;
+declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT signature block        #Declaration_function;
 
-params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)* #ParamsFunc;
-signals: (SEMIC IDENTIFIER (COMMA IDENTIFIER)* )                                       #SignalsFunc;
+params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)*         #ParamsFunc;
+signals: (SEMIC IDENTIFIER (COMMA IDENTIFIER)* )                                        #SignalsFunc;
 signature: Unit                                                                         #SigUnit
          | Int                                                                          #SigInt
          | Bool                                                                         #SigBool
@@ -27,6 +27,8 @@ expr: value                                                                     
     | LPAR (expr(COMMA expr)*)?RPAR                                                     #ExpTuple
     | Spawn LPAR IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR RPAR             #ExpInvoke
     | Cooperate                                                                         #ExpCooperate
+    | expr OPERATOR expr                                                                #ExpConditionals
+    | IF LPAR expr RPAR block ELSE block                                                #ExpIF
    // | expr  (SEMIC expr SEMIC?)                         #ExpSequence
     | block                                                                             #ExpBlock
     | PRINT LPAR ((DoubleQuote IDENTIFIER DoubleQuote) | (Mul* IDENTIFIER) | ((DoubleQuote IDENTIFIER DoubleQuote PLUS IDENTIFIER)(PLUS DoubleQuote IDENTIFIER DoubleQuote)*))  RPAR        #ExpPrint
@@ -99,6 +101,9 @@ PRINT: 'print!';
 Mul: '*';
 Ref: '&';
 Dot:'.';
+IF:'if';
+ELSE:'else';
+OPERATOR:'==';
 IDENTIFIER: VALID_ID_START VALID_ID_CHAR*;
 VALID_ID_START
    : ('a' .. 'z') | ('A' .. 'Z') | '_'

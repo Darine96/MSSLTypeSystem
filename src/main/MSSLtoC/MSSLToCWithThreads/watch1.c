@@ -13,7 +13,7 @@ struct node *__th2;
 void f1(void* args){	
 	ft_event_t s1 = (ft_event_t ) get_value(args,0);	
 	ft_event_t s2 = (ft_event_t ) get_value(args,1);	
-static void* arr[]= {};
+	static void* arr[2]= {};
     int taille = 0;
     char str[20];
     strcpy(str, __func__);
@@ -51,19 +51,19 @@ static void* arr[]= {};
 	if(ft_thread_get_case_watch()){
              if(ft_thread_compare_function(str)){
                 int index = ft_thread_goto(taille);
-               _reset_event_in_list(s1);
+               ft_thread_reset_event(s1);
                 goto *arr[index];
             }
              else{
                 ft_thread_return_function(taille);
-                _reset_event_in_list(s1);
+                ft_thread_reset_event(s1);
                 return; }
          }{
 
-}	_reset_event_in_list(s1);};
+}	ft_thread_reset_event(s1);};
 
 }//NOM DU SIGNAL
-   s2: 
+   s2:{ 
       ft_thread_watch_list_not_done();// attention
       taille--;
    }};
@@ -74,11 +74,7 @@ static void* arr[]= {};
 void f2(void* args){	
 	ft_event_t s1 = (ft_event_t ) get_value(args,0);	
 	ft_event_t s2 = (ft_event_t ) get_value(args,1);	
-static void* arr[]= {};
-    int taille = 0;
-    char str[20];
-    strcpy(str, __func__);
-	 ft_thread_generate(s1);
+	 ft_thread_generate(s2);
 	
 	
 
@@ -89,16 +85,13 @@ int main(int argc, char const *argv[]){
 	sched = ft_scheduler_create ();
 	 ft_event_t s1 = ft_event_create (sched);
 	 ft_event_t s2 = ft_event_create (sched);
-	__th2 = add_value_indetermine(1, s1);
+	__th2 = add_value_indetermine(1, s1, s2);
 	_th2 = ft_thread_create(sched,f1,NULL,__th2);
-	__th1 = add_value_indetermine(1, s1);
+	__th1 = add_value_indetermine(1, s1, s2);
 	_th1 = ft_thread_create(sched,f2,NULL,__th1);
 	ft_scheduler_start (sched);
 	pthread_join (ft_pthread(_th1),&retval);
-	ft_free(_th1);
 	pthread_join (ft_pthread(_th2),&retval);
-	ft_free(_th2);
-	ft_scheduler_free(sched);
 	free_node(__th2);
 	free_node(__th1);
 	
