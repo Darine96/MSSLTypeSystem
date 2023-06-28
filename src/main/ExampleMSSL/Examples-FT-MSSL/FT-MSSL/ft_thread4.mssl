@@ -5,8 +5,8 @@ fn bar(mut x:trc<int>, mut y:trc<int>)->unit{
     *a = 5;
     }
     cooperate;
-    //print the content of x: is equal 5?
-
+    //print the content of *x: is equal 5?
+    print!(*x);
     //free(x) and free(y)
 }
 
@@ -16,6 +16,7 @@ fn foo(mut x: trc<int>, mut y: box<trc<int>>)->unit{
     //print the content of x: is equal 2?
     spawn(bar(x.clone, *y.clone));
     cooperate;
+    print!(*x);
     //print the content of x: is equal 5?
     //free(x) and free(y)
 }

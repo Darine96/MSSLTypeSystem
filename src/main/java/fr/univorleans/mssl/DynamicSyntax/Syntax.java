@@ -27,6 +27,13 @@ public class Syntax {
     public final static int Tuples_Expression=16;
 
     public final static int Print_Expression=17;
+    public final static int Sig_Expression=18;
+
+    public final static int Emit_Expression=19;
+
+    public final static int When_Expression=20;
+
+    public final static int Watch_Expression=21;
 
     public interface Expression {
         public int getOpcode();
@@ -68,6 +75,135 @@ public class Syntax {
             @Override
             public String toString() {
                 return "let mut " + variable + " = " + initialiser;
+            }
+        }
+        public class Sig implements Expression{
+            public String variable;
+
+            public Sig(String variable) {
+                this.variable = variable;
+            }
+
+            public String getVariable() {
+                return variable;
+            }
+
+            public void setVariable(String variable) {
+                this.variable = variable;
+            }
+
+            @Override
+            public int getOpcode() {
+                return Sig_Expression;
+            }
+
+            @Override
+            public String toString() {
+                return "Sig "+getVariable();
+            }
+        }
+
+        public class Emit implements Expression{
+            public String variable;
+
+            public Emit(String variable) {
+                this.variable = variable;
+            }
+
+            public String getVariable() {
+                return variable;
+            }
+
+            public void setVariable(String variable) {
+                this.variable = variable;
+            }
+
+            @Override
+            public int getOpcode() {
+                return Emit_Expression;
+            }
+
+            @Override
+            public String toString() {
+                return "emit( "+getVariable() +")";
+            }
+        }
+
+        /**
+         * when (s) e;
+         */
+        public class When implements Expression{
+            public String variable;
+            public Expression operand;
+
+            public When(String variable, Expression operand) {
+                this.variable = variable;
+                this.operand=operand;
+            }
+
+            public String getVariable() {
+                return variable;
+            }
+
+            public void setVariable(String variable) {
+                this.variable = variable;
+            }
+
+            public Expression getOperand() {
+                return operand;
+            }
+
+            public void setOperand(Expression operand) {
+                this.operand = operand;
+            }
+
+            @Override
+            public int getOpcode() {
+                return When_Expression;
+            }
+
+            @Override
+            public String toString() {
+                return "when("+getVariable()+")"+getOperand();
+            }
+        }
+
+        /**
+         * when (s) e;
+         */
+        public class Watch implements Expression{
+            public String variable;
+            public Expression operand;
+
+            public Watch(String variable, Expression operand) {
+                this.variable = variable;
+                this.operand=operand;
+            }
+
+            public String getVariable() {
+                return variable;
+            }
+
+            public void setVariable(String variable) {
+                this.variable = variable;
+            }
+
+            public Expression getOperand() {
+                return operand;
+            }
+
+            public void setOperand(Expression operand) {
+                this.operand = operand;
+            }
+
+            @Override
+            public int getOpcode() {
+                return Watch_Expression;
+            }
+
+            @Override
+            public String toString() {
+                return "watch("+getVariable()+")"+getOperand();
             }
         }
 

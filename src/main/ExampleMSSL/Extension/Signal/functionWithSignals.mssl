@@ -1,0 +1,9 @@
+fn f1(mut x: trc<int>; s1)->unit{
+    Sig s;
+    emit(s);
+    when(s){}
+}
+
+{
+
+}

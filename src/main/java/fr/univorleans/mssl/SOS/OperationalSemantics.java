@@ -6,6 +6,7 @@ import fr.univorleans.mssl.DynamicSyntax.Syntax.Expression;
 import fr.univorleans.mssl.DynamicSyntax.Syntax.Expression.*;
 import fr.univorleans.mssl.SOS.StoreProgram.State;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -331,6 +332,33 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     /**
+     * R-Sig
+     * @param state
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Sig expression) {
+        /** get the global lifetime */
+        Lifetime global = lifetime.getRoot();
+       /**
+         * initialise the counter of signal to 1 and its value to 0 ( absent by default)
+         */
+        Value.Integer v = new Value.Integer(0);
+        Pair<State, Value.Reference> pl = state.allocate(global, v, 1);
+
+        State S2 = pl.first();
+        Value.Reference ls = pl.second();
+
+        /** Bind Signal to location
+         * and bind signal to the lifetime
+         */
+        String s = expression.getVariable();
+        return reducedDeclare(S2,lifetime,s,ls);
+    }
+
+    /**
      * trc(e)
      * @param state
      * @param lifetime
@@ -352,10 +380,99 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         }
     }
 
+    /**
+     * R-Emit
+     * @param state
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Emit expression) {
+        /**
+         * (1) get the value of signal
+         */
+        // since reduce expresion takes an lval , so we need to create an lval
+        Lval w = new Lval(expression.getVariable(), new Path());
+       /* Pair<State, Expression> p = reduceCopy(state, lifetime, w);*/
+        /** read the value of signal **/
+        /** determine if w existe **/
+        Value v1 = state.read(w, lifetime);
+        /**
+         * upates its value in the store (i.e. make the signal present)
+         */
+        /*********************************************************/
+        /** get the global lifetime */
+        Lifetime global = lifetime.getRoot();
+        /**
+         * initialise the counter of signal to 1 and its value to 0 ( absent by default)
+         */
+        Value.Integer v = new Value.Integer(1);
+        Pair<State, Value.Reference> pl = state.allocate(global, v, 1);
 
+        State S2 = pl.first();
+        Value.Reference ls = pl.second();
+        /*********************************************************/
+        State S = S2.write(w, ls, lifetime);
+
+        /** drop v ***/
+        State S3 = S.drop(v1);
+        Path.Element[] es = new Path.Element[1];
+        es[0]=Path.DEREF_ELEMENT;
+        Lval lvam = new Lval(expression.getVariable(), new Path(es));
+        Value v2 = S3.read(lvam, lifetime);
+        //System.out.println("\n\n v2"+v2.toString()+"\n");
+        return new Pair<>(S3, Unit);
+    }
+
+    @Override
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, When expression) {
+        /** read the value of s **/
+        String s = expression.getVariable();
+        Path.Element[] es = new Path.Element[1];
+        es[0]=Path.DEREF_ELEMENT;
+        Lval w = new Lval(s, new Path(es));
+        //System.out.println("\n\n"+expression.getOperand().toString()+"\n\n");
+        /** determine if w existe **/
+        Value v = state.read(w, lifetime);
+       /** R-whenFalse **/
+        if(Integer.valueOf(v.toString()) == 0){
+            return new Pair<>(state, expression);
+        }
+       /** R-whenTrue **/
+       else{
+           Pair<State,Expression> S = apply(state,lifetime,expression.getOperand());
+           return new Pair<>(S.first(), S.second());
+        }
+
+    }
+
+    /**
+     * R-Watch
+     * @param state
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Watch expression) {
+        /** determine if the signal given in parameter existe **/
+        Pair<State,Expression> S = apply(state,lifetime,expression.getOperand());
+        return new Pair<>(S.first(), S.second());
+    }
+
+
+    /**
+     * R-Spawn
+     * @param state
+     * @param lifetime
+     * @param expression
+     * @return
+     */
     @Override
     protected Pair<State, Expression> apply(State state, Lifetime lifetime, InvokeFunction expression) {
         final Expression[] arguments = expression.getArguments();
+        final String[] signals = expression.getSignals();
 
         int i = ExprNonValue(arguments);
         /**
@@ -363,7 +480,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
          * All operands fully reduced, so perform invocation
          */
         if(i == -1){
-            return invoke(state, lifetime, expression.getName(), expression.getArguments());
+            return invoke(state, lifetime, expression.getName(), expression.getArguments(),signals);
         }
         else {
             Expression ith = arguments[i];
@@ -372,7 +489,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
 
             Expression[] nelements = Arrays.copyOf(arguments, arguments.length);
             nelements[i] = reduce.second();
-            return new Pair<>(reduce.first(), new InvokeFunction(expression.getName(), nelements));
+            return new Pair<>(reduce.first(), new InvokeFunction(expression.getName(), nelements,signals));
         }
     }
 
@@ -499,7 +616,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     /**
      * invoke function
      */
-    private Pair<State, Expression> invoke(State state, Lifetime lifetime, String name, Expression[] arguments) {
+    private Pair<State, Expression> invoke(State state, Lifetime lifetime, String name, Expression[] arguments, String[] signals) {
         /**
          * recuperer la function
          */
@@ -525,6 +642,23 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
             Pair<State, Value.Reference> p = state.allocate(body.getLifetime(), ith);
             state = p.first().bind(params[i].first(), p.second(), body.getLifetime());
         }
+
+        /**
+         * allocate signal and incremente the content
+         */
+        for(int i = 0; i<signals.length; ++i){
+            // Read the value of the lval update qith lifetime
+            Lval w = new Lval(signals[i],new Path());
+            //Value lx = state.read(w, lifetime);
+            /**
+             * increment the counter
+             */
+            Pair<State, Value.Reference> S2 = state.increment_counter(w, lifetime);
+            Pair<State, Value.Reference> p = state.allocate(body.getLifetime(), S2.second());
+            state = p.first().bind(w.name(), p.second().toCloned(), body.getLifetime());
+        }
+
+
         // Done
         return new Pair<>(state, body);
     }

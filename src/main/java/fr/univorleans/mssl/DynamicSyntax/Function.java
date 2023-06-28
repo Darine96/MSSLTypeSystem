@@ -8,19 +8,28 @@ import fr.univorleans.mssl.SOS.Pair;
 public class Function implements Syntax.Expression{
     private final String name;
     private final Pair<String, Signature>[] params;
+
+    private final String[] signals;
     private final Signature ret;
     private final Block body;
 
+    public Boolean containsWhenWatch = false;
 
-    public Function(String name, Pair<String, Signature>[] params, Signature ret, Block body) {
+    public Function(String name, Pair<String, Signature>[] params,
+            String[] signals,Signature ret, Block body) {
         this.name = name;
         this.params = params;
+        this.signals=signals;
         this.ret = ret;
         this.body = body;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String[] getSignals() {
+        return signals;
     }
 
     /**
@@ -65,13 +74,31 @@ public class Function implements Syntax.Expression{
         }
     }
 
+    public String toString_signals(){
+
+        if (this.getSignals().length == 0){
+            return "";
+        }
+        else if (this.getSignals().length == 1){
+            return "; "+this.getSignals()[0];
+        }
+        else {
+            String signals = "; "+this.getSignals()[0];
+            for (int i = 1; i < this.getSignals().length; ++i) {
+                signals = signals+ ", "+this.getSignals()[i];
+            }
+            // params = params+" mut "+this.getParams()[0].first()+" : "+this.getParams()[0].second() +", ";
+            return signals;
+        }
+    }
+
     @Override
     public int getOpcode() {
         return Syntax.Invoke_Expression;
     }
     @Override
     public String toString() {
-        return "fn "+this.getName()+" ( "+toString_params()+" ) -> "+this.ret.toString() +" "+this.getBody().toString()
+        return "fn "+this.getName()+" ( "+toString_params()+toString_signals()+" ) -> "+this.ret.toString() +" "+this.getBody().toString()
                 ;
     }
 }

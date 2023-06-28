@@ -4,6 +4,7 @@ import com.google.common.base.CharMatcher;
 import fr.univorleans.mssl.DynamicSyntax.*;
 import fr.univorleans.mssl.DynamicSyntax.Syntax.Expression;
 import fr.univorleans.mssl.MSSL.Main;
+import fr.univorleans.mssl.MSSL.ExtensionMain;
 import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.TypeSystem.Environment;
 import fr.univorleans.mssl.TypeSystem.Location;
@@ -31,7 +32,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     private int NBthreads;
 
     private static int CopyNBthreads = 0;
-    private static String filename = Main.getSource();
+    private static String filename = getFilename();
 
     private String current_fresh="";
 
@@ -48,6 +49,12 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     private int nodeNumbers =0;
     private final List<Function> functions;
 
+    public static String getFilename(){
+        if(Main.getSource()!=""){
+            return Main.getSource();
+        }
+        return ExtensionMain.getSource();
+    }
     public void setNBthreads() {
         NBthreads--;
     }
@@ -125,6 +132,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             try{
                 PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
                 writer.println("\nvoid "+functions.get(i).getName()+"(void* args){\t");
+                int counter = functions.get(i).getParams().length;
                 for (int j=0; j!=functions.get(i).getParams().length;++j){
                     Pair<String, Signature> jth = functions.get(i).getParams()[j];
                     String type=null;
@@ -168,6 +176,19 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                     }else{
                         writer.print(type+jth.first()+")");
                     }*/
+                }
+                for (int j=0; j!=functions.get(i).getSignals().length;++j){
+                    String jth = functions.get(i).getSignals()[j];
+                    String type="ft_event_t ";
+                    writer.println("\t"+type+jth+" = ("+type+") get_value(args,"+counter+");\t");
+                    counter+=1;
+
+                }
+                if(functions.get(i).containsWhenWatch) {
+                    writer.println("\tstatic void* arr["+functions.get(i).getSignals().length +"]= {};\n" +
+                            "    int taille = 0;\n" +
+                            "    char str[20];\n" +
+                            "    strcpy(str, __func__);");
                 }
                 writer.close();
             }
@@ -441,9 +462,10 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             else{ if(CopyNBthreads>0) {
                 writer.println("\tft_scheduler_start (sched);");
                 for (int i = 1; i <= CopyNBthreads; ++i) {
-                    writer.println("\tpthread_join (ft_pthread(_th" + i + "),&retval);\n\tft_free(_th" + i + ");");
+                    writer.println("\tpthread_join (ft_pthread(_th" + i + "),&retval);");
+                   // writer.println("\tft_free(_th\" + i + \");");
                 }
-                writer.println("\tft_scheduler_free(sched);");
+              //  writer.println("\tft_scheduler_free(sched);");
             }
                 /**
                  * free at the end of each block
@@ -644,21 +666,26 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         //(0) get the function
         String name= expression.getName();
         Syntax.Expression[] arguments = expression.getArguments();
-
+        String[] signals = expression.getSignals();
             // (0.1) create a fresh variable is necessary
             String[] args = fresh_argments(name, arguments);
             //(1) create a struct
            // String node = "__" + name;
             String node = "__th" + NBthreads;
             nodeNumbers+=1;
-            if(arguments.length!=0) {
+            if(arguments.length!=0 || signals.length!=0) {
                 try {
                     PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
                     //writer.println("\tstruct node *" + node + ";");
                     //(2) add the arguments to the struct
-                    writer.print("\t" + node + " = add_value_indetermine(" + (arguments.length - 1));
+                    writer.print("\t" + node + " = add_value_indetermine(" + (arguments.length + signals.length - 1));
+                    int j=0;
                     for (int i = 0; i != args.length; ++i) {
                         writer.print(", " + args[i]);
+                    }
+
+                    for (int i = 0; i!=signals.length; ++i) {
+                        writer.print(", " + signals[i]);
                     }
                     writer.println(");");
                     writer.close();
@@ -673,7 +700,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         setNBthreads();
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            if(arguments.length!=0) {
+            if(arguments.length!=0 || signals.length!=0) {
                 writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL," + node + ")");
             }else{
                 writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL,NULL)");
@@ -872,6 +899,130 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     }
     @Override
     protected Syntax.Expression apply(Syntax.Expression.Access expression) {
+        return null;
+    }
+
+    @Override
+    protected Expression apply(Expression.Sig expression) {
+        String s = expression.getVariable();
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("\t ft_event_t "+s+" = ft_event_create (sched)");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    protected Expression apply(Expression.When expression) {
+        String s = expression.getVariable();
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("\t { ft_thread_when_event("+s+");\n\t");
+            writer.print("if(ft_thread_get_case_watch()){\n" +
+                    "             if(ft_thread_compare_function(str)){\n" +
+                    "                int index = ft_thread_goto(taille);\n" +
+                    "               ft_thread_reset_event("+s+");\n" +
+                    "                goto *arr[index];\n" +
+                    "            }\n" +
+                    "             else{\n" +
+                    "                ft_thread_return_function(taille);\n" +
+                    "                ft_thread_reset_event("+s+");\n" +
+                    "                return; }\n" +
+                    "         }");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        apply(expression.getOperand());
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("\tft_thread_reset_event("+s+");}");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    protected Expression apply(Expression.Watch expression) {
+        String s = expression.getVariable();
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("{\n" +
+                    "      ft_thread_set_event_watch("+s+", str);\n" +
+                    "      arr[taille]= &&"+s+";\n" +
+                    "      taille++;\n" +
+                    "      \n" +
+                    "   if(ft_thread_get_case_watch()){\n" +
+                    "      //case 1: function event same current function:\n" +
+                    "      if(ft_thread_compare_function(str)){\n" +
+                    "         //case 2: case_function is true\n" +
+                    "         if(ft_thread_get_case_function()){\n" +
+                    "            int index = ft_thread_goto_case_function(taille);// faire attention\n" +
+                    "            //printf(\"the index is %d\\n\", index);\n" +
+                    "            taille = index + 1;\n" +
+                    "            goto *arr[index];\n" +
+                    "         }\n" +
+                    "         else{\n" +
+                    "            int index = ft_thread_goto(taille);\n" +
+                    "\n" +
+                    "            //printf(\"the index is %d\\n\", index);\n" +
+                    "            taille = index + 1;\n" +
+                    "            goto *arr[index];\n" +
+                    "         }\n" +
+                    "      \n" +
+                    "   }\n" +
+                    "   else{\n" +
+                    "      // the watch event generate not in the same current function\n" +
+                    "      ft_thread_return_function(taille);\n" +
+                    "      return;\n" +
+                    "   }\n" +
+                    "   }");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        apply(expression.getOperand());
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("//NOM DU SIGNAL\n" +
+                    "   "+s+":{ \n" +
+                    "      ft_thread_watch_list_not_done();// attention\n" +
+                    "      taille--;\n" +
+                    "   }}");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    protected Expression apply(Expression.Emit expression) {
+        String s = expression.getVariable();
+        try{
+            PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
+            writer.print("\t ft_thread_generate("+s+")");
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
         return null;
     }
 

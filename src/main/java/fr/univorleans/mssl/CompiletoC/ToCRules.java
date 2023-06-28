@@ -37,6 +37,14 @@ public abstract class ToCRules< E extends ToCRules.ExtensionToC> {
                 return  apply((Expression.Cooperate) expression);
             case Syntax.Print_Expression:
                 return  apply((Expression.Print) expression);
+            case Syntax.Sig_Expression:
+                return  apply((Expression.Sig) expression);
+            case Syntax.When_Expression:
+                return  apply((Expression.When) expression);
+            case Syntax.Watch_Expression:
+                return  apply((Expression.Watch) expression);
+            case Syntax.Emit_Expression:
+                return  apply((Expression.Emit) expression);
             case Value.Unit_Expression:
                 return  apply((Value.Unit) expression);
             case Value.Integer_Expression:
@@ -70,6 +78,14 @@ public abstract class ToCRules< E extends ToCRules.ExtensionToC> {
     protected abstract Expression apply(Expression.Cooperate expression);
 
     protected abstract Expression apply(Expression.Access expression);
+
+    protected abstract Expression apply(Expression.Sig expression);
+
+    protected abstract Expression apply(Expression.When expression);
+
+    protected abstract Expression apply(Expression.Watch expression);
+
+    protected abstract Expression apply(Expression.Emit expression);
 
 
     protected abstract Expression apply(Tuples.TuplesExpression expression);

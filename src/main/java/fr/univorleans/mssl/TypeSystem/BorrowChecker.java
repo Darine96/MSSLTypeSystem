@@ -5,6 +5,7 @@ import fr.univorleans.mssl.Exception.ExceptionsMSG;
 import fr.univorleans.mssl.MSSL.Main;
 import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.SOS.ReductionRule;
+import sun.jvm.hotspot.debugger.cdbg.Sym;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -428,6 +429,35 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
 
 
     /**
+     * T-Sig
+     * @param gam1
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Sig expression) {
+        // récuperer la variable
+        String s = expression.getVariable();
+        Location ls = gam1.get(s);
+        //exception if  the signal is already existe
+        if(ls!=null){
+            try {
+                check(true, "Signal already declared ");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }
+        //update
+        Environment gam2 = gam1.put(s,Type.Sig,lifetime);
+        /** necessary to CompiletoC **/
+        global = global.put(s,Type.Sig,lifetime);
+        //done
+        return new Pair<>(gam2, Type.Unit);
+    }
+
+
+    /**
      * T-Trc
      * @param gam1
      * @param lifetime
@@ -448,6 +478,96 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             throw new RuntimeException(e);
         }
        return new Pair<>(gam2, new Type.Trc(type));
+    }
+
+    /**
+     * T-Emit
+     * @param gam
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Emit expression) {
+        // récuperer la variable
+        String s = expression.getVariable();
+        Location ls = gam.get(s);
+        //exception if  the signal is already existe
+        if(ls==null){
+            try {
+                check(true, "The signal "+ s+" does not exist ");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }
+        //done
+        return new Pair<>(gam, Type.Unit);
+    }
+
+    /**
+     * T-When
+     * @param gam
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.When expression) {
+        // récuperer la variable
+        String s = expression.getVariable();
+        Location ls = gam.get(s);
+        //exception if  the signal is already existe
+        if(ls==null){
+            try {
+                check(true, "The signal "+ s+" does not exist ");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }
+        System.out.println("\n\n hello \n\n");
+        // safeTrc
+        try {
+
+            check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        //Type operand: expression
+        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand());
+        //recuperer le type then update gam1
+        Environment gam1 = operand.first();
+        Type type = operand.second();
+        //done
+        return new Pair<>(gam1, type);
+    }
+
+    /**
+     * T-watch
+     * @param gam
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Watch expression) {
+        // récuperer la variable
+        String s = expression.getVariable();
+        Location ls = gam.get(s);
+        //exception if  the signal is already existe
+        if(ls==null){
+            try {
+                check(true, "The signal "+ s+" does not exist ");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }
+        //Type operand: expression
+        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand());
+        //recuperer le type then update gam1
+        Environment gam1 = operand.first();
+        Type type = operand.second();
+        //done
+        return new Pair<>(gam1, type);
     }
 
 
@@ -535,6 +655,17 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         Syntax.Expression[] arguments = expression.getArguments();
         try {
             check((parameters.length != arguments.length), "The number of arguments is incompatible with the number of parameters!");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+
+        //compare the signals arguments given by the signals parameters of the function
+       String[] signals = declaration.getSignals();
+        String[] signalsarguments = expression.getSignals();
+        System.out.println("\n\n signals parameters "+signals.length);
+        System.out.println("\n\n signals arguments "+signalsarguments.length);
+        try {
+            check((signals.length != signalsarguments.length), "The number of signal's arguments is incompatible with the number of signal's parameters!");
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }

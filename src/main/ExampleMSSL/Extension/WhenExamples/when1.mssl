@@ -1,0 +1,17 @@
+
+fn f1(;s1)->unit{
+    when(s1){
+        //
+    }
+}
+
+fn f2(;s1)->unit{
+    emit(s1);
+}
+
+//main
+{
+    Sig s1;
+    spawn(f1(;s1));
+    spawn(f2(;s1));
+}

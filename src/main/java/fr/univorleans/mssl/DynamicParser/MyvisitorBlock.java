@@ -1,6 +1,7 @@
 package fr.univorleans.mssl.DynamicParser;
 
 import com.google.common.base.CharMatcher;
+//import com.sun.java.swing.action.NewAction;
 import fr.univorleans.mssl.DynamicSyntax.*;
 import fr.univorleans.mssl.DynamicSyntax.Syntax.*;
 import fr.univorleans.mssl.DynamicSyntax.Syntax.Expression.*;
@@ -22,6 +23,8 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
     public ArrayList<Function> declarations = new ArrayList<>();
     private Lifetime globalLifetime;
     public Lifetime current_lifetime = null;
+
+    public Boolean WhenWatch = false;
     /**
      * environment for the semantics (copy, move)
      */
@@ -67,9 +70,27 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         Signature ret = (Signature) this.visit(ctx.signature());
         //get the function body
         Syntax.Expression.Block body = (Syntax.Expression.Block) this.visit(ctx.block());
+
+        String[] signals = new String[0];
+        if(ctx.signals()!=null){
+            String s1 = ctx.signals().getText();
+
+            signals = s1.replace(";","").split(",");
+        }
         //clear the environnment
         kindVariable.clear();
-        return new Function(nameFunc, params.toArray(new Pair[params.size()]), ret, body); }
+        Function f = new Function(nameFunc, params.toArray(new Pair[params.size()]), signals,ret, body);
+        if(WhenWatch){ f.containsWhenWatch=true; WhenWatch=false;  }
+        return f; }
+
+    @Override public ArrayList<String> visitSignalsFunc(msslParser.SignalsFuncContext ctx) {
+        ArrayList<String> signals = new ArrayList<>();
+        for (int i =0; i<ctx.IDENTIFIER().size(); i++){
+               signals.add(ctx.IDENTIFIER(i).toString());
+        }
+
+        return signals;  }
+
 
     @Override public ArrayList<Pair<String, Signature>> visitParamsFunc(msslParser.ParamsFuncContext ctx) {
         //get the parameters function
@@ -298,8 +319,12 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
                 arguments.add(expression);
             }
         }
+        ArrayList<String> signals = new ArrayList<>();
+        if(ctx.signals()!=null){
+            signals = (ArrayList<String>) this.visit(ctx.signals());
+        }
         Syntax.Expression[] expressions = arguments.toArray(new Syntax.Expression[arguments.size()]);
-        return new InvokeFunction(name, expressions); }
+        return new InvokeFunction(name, expressions,signals.toArray(new String[signals.size()])); }
 
     /**
      * x =trc(0); y = x.clone; or x = box(trc(x)); y=*x.clone;
@@ -333,6 +358,33 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         current_lifetime = current_lifetime.get();
         //  System.out.printf("\ncurrent lifetime be after after"+current_lifetime.get());
         return block; }
+
+    @Override public Syntax.Expression.Sig visitInstSig(msslParser.InstSigContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        //System.out.println(name);
+        return new Sig(name); }
+
+    @Override public Syntax.Expression.Emit visitInstEmit(msslParser.InstEmitContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        return new Emit(name); }
+
+    @Override public Syntax.Expression.When visitInstWhen(msslParser.InstWhenContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        current_lifetime= current_lifetime.freshWithin();
+        Syntax.Expression expression = (Syntax.Expression) this.visit(ctx.block());
+        current_lifetime = current_lifetime.get();
+       // System.out.println(expression.toString());
+        WhenWatch = true;
+        return new When(name,expression); }
+
+    @Override public Syntax.Expression.Watch visitInstWatch(msslParser.InstWatchContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        current_lifetime= current_lifetime.freshWithin();
+        Syntax.Expression expression = (Syntax.Expression) this.visit(ctx.block());
+        current_lifetime = current_lifetime.get();
+        WhenWatch = true;
+        return new Watch(name,expression); }
+
 
     @Override public Syntax.Expression.Declaration visitDeclVar(msslParser.DeclVarContext ctx) {
         /**

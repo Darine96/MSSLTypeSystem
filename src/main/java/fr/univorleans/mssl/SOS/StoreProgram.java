@@ -459,7 +459,9 @@ public class StoreProgram {
         public Store drop(BitSet locations, Value... temporaries) {
             Slot[] ncells = Arrays.copyOf(cells, cells.length);
             for (int i = locations.nextSetBit(0); i != -1; i = locations.nextSetBit(i + 1)) {
+
                 destroy(ncells, i);
+
             }
             // Check the heap invariant still holds!
             /**

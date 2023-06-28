@@ -2,9 +2,12 @@
     Sig s;
     Sig s1;
     emit(s1);
-    when(s1){
+    watch(s){
+        when(s1){
         let mut x = trc(0);
-        let mut a = &x;
+        let mut a = &*x;
         cooperate;
+        *a = 1;
+        }
     }
  }

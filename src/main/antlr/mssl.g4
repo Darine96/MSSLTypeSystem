@@ -3,10 +3,10 @@ grammar mssl;
 
 program: declaration* block EOF                                                         #Prog
        ;
-declaration: FN IDENTIFIER LPAR (params)? RPAR Sub GT signature block                   #Declaration_function;
+declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT signature block                   #Declaration_function;
 
-params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)*         #ParamsFunc;
-
+params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)* #ParamsFunc;
+signals: (SEMIC IDENTIFIER (COMMA IDENTIFIER)* )                                       #SignalsFunc;
 signature: Unit                                                                         #SigUnit
          | Int                                                                          #SigInt
          | Bool                                                                         #SigBool
@@ -25,7 +25,7 @@ expr: value                                                                     
     | Box LPAR expr RPAR                                                                #ExpBox
     | Trc LPAR expr RPAR                                                                #ExpTrc
     | LPAR (expr(COMMA expr)*)?RPAR                                                     #ExpTuple
-    | Spawn LPAR IDENTIFIER LPAR (expr (COMMA expr)*)? RPAR RPAR                        #ExpInvoke
+    | Spawn LPAR IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR RPAR             #ExpInvoke
     | Cooperate                                                                         #ExpCooperate
    // | expr  (SEMIC expr SEMIC?)                         #ExpSequence
     | block                                                                             #ExpBlock
@@ -44,6 +44,10 @@ instructions: instruction*                                                      
 instruction: declVar                                                                    #InstLet
            | expr EQ expr SEMIC                                                         #InstAssignment
            | expr SEMIC                                                                 #InstExpr
+           | Emit LPAR IDENTIFIER RPAR  SEMIC                                                #InstEmit
+           | When LPAR IDENTIFIER RPAR block                                             #InstWhen
+           | Watch LPAR IDENTIFIER RPAR block                                            #InstWatch
+           | Sig IDENTIFIER SEMIC                                                       #InstSig
 //           |expr SEMIC (SEMIC expr)*                          # InstSequence
            | block                                                                      #InstBlock
            ;
@@ -84,6 +88,10 @@ LET: 'let';
 MUT: 'mut';
 Box: 'box';
 Trc: 'trc';
+Sig: 'Sig';
+Emit: 'emit';
+When: 'when';
+Watch: 'watch';
 Clone: 'clone';
 Spawn: 'spawn';
 Cooperate: 'cooperate';

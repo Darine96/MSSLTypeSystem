@@ -14,6 +14,10 @@ public interface Type {
      */
     public static Type Unit = new Unit();
     /**
+     * Create an instance of the Sig type
+     */
+    public static Type Sig = new Unit();
+    /**
      * Create an instance of the int type
      */
     public static Type Int = new Int();
@@ -256,6 +260,20 @@ public interface Type {
         @Override
         public String toString() {
             return "void";
+        }
+    }
+
+    public class Sig extends AbstractType{
+        public Sig() {
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Type.Sig;
+        }
+        @Override
+        public String toString() {
+            return "Sig";
         }
     }
 

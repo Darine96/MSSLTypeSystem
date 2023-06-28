@@ -48,6 +48,7 @@ public class BorrowCheckerFunction extends BorrowChecker{
     protected void apply(Lifetime lifetime, Function function) throws ExceptionsMSG {
         //(1) récuperer les parametres
         Pair<String, Signature>[] params = function.getParams();
+        String[] signals = function.getSignals();
         /**
          * check the shape of the signatures
          */
@@ -77,6 +78,18 @@ public class BorrowCheckerFunction extends BorrowChecker{
             /** needed for free to compiletoC ***/
             map.put(p,r.second());
             }
+        //(5) put signals into gam
+        for (int i = 0; i != signals.length; ++i) {
+            String s = signals[i];
+            // Bind signal to resulting type
+            gam = gam.put(s, new Location(Type.Sig, newLft));
+            /*** necessary to compileToC **/
+            envf = envf.put(s, new Location(Type.Sig, newLft));
+            // System.out.printf("\n\n\n environment "+envf);
+
+            /** needed for free to compiletoC ***/
+            map.put(s,Type.Sig);
+        }
             /** put map into block of the function **/
             function.getBody().put(map);
         //(5) // Type method body

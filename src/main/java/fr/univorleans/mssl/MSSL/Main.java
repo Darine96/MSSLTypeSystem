@@ -25,7 +25,7 @@ public class Main {
             System.out.println(str.length());
         }
     }*/
-    static private String source;
+    static private String source="";
     static private int NBthreads;
 
     public static int getNBthreads() {
@@ -80,7 +80,7 @@ public class Main {
                 typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block);
                 /*******************************************************/
                 /**************** Semantics and reduction rules ********/
-                OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
+              /*  OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
                 Pair<StoreProgram.State, Expression> state = new Pair<>(new StoreProgram.State(),visitor.block);
                 Expression result = new OperationalSemantics(globalLifetime, opf.getFunctions()).execute(globalLifetime, state.second());
 
@@ -93,6 +93,7 @@ public class Main {
                 throw new RuntimeException(e);
             }
         }
+
 
 }
 // gradle build

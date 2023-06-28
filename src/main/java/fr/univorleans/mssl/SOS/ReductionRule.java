@@ -27,6 +27,14 @@ public abstract class ReductionRule<T, S, E extends ReductionRule.Extension<T, S
                 return (Pair<T, S>) apply(state, lifetime, (InvokeFunction) expression);
             case Syntax.Declaration_Function:
                 return (Pair<T, S>) apply(state, lifetime, (Function) expression);
+            case Syntax.Sig_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.Sig) expression);
+            case Syntax.Emit_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.Emit) expression);
+            case Syntax.When_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.When) expression);
+            case Syntax.Watch_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.Watch) expression);
             case Syntax.Clone_Expression:
                 return (Pair<T, S>) apply(state, lifetime, (Expression.Clone) expression);
             case Syntax.Borrow_Expression:
@@ -64,7 +72,15 @@ public abstract class ReductionRule<T, S, E extends ReductionRule.Extension<T, S
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Block expression);
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Box expression);
 
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Sig expression);
+
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Trc expression);
+
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Emit expression);
+
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.When expression);
+
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Watch expression);
 
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, InvokeFunction expression);
 

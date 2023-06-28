@@ -1,0 +1,20 @@
+
+fn f1(;s1,s2)->unit{
+    watch(s2){
+    when(s1){
+        //
+    }
+    }
+}
+
+fn f2(;s1,s2)->unit{
+    emit(s2);
+}
+
+//main
+{
+    Sig s1;
+    Sig s2;
+    spawn(f1(;s1,s2));
+    spawn(f2(;s1,s2));
+}

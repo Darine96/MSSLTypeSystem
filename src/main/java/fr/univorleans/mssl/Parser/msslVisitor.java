@@ -32,6 +32,13 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitParamsFunc(msslParser.ParamsFuncContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code SignalsFunc}
+	 * labeled alternative in {@link msslParser#signals}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSignalsFunc(msslParser.SignalsFuncContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code SigUnit}
 	 * labeled alternative in {@link msslParser#signature}.
 	 * @param ctx the parse tree
