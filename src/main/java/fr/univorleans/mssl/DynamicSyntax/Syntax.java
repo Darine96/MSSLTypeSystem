@@ -35,6 +35,10 @@ public class Syntax {
 
     public final static int Watch_Expression=21;
 
+    public final static int Conditional_Expression=22;
+
+    public final static int IfElse_Expression=23;
+
     public interface Expression {
         public int getOpcode();
 
@@ -77,6 +81,41 @@ public class Syntax {
                 return "let mut " + variable + " = " + initialiser;
             }
         }
+
+        public class IfElse implements Expression {
+            private Expression conditions;
+            private Block ifblock;
+
+            private Block elseblock;
+
+            public IfElse(Expression conditions, Block ifblock, Block elseblock) {
+                this.conditions = conditions;
+                this.ifblock = ifblock;
+                this.elseblock = elseblock;
+            }
+
+            public Expression getConditions() {
+                return conditions;
+            }
+
+            public Block getIfblock() {
+                return ifblock;
+            }
+
+            public Block getElseblock() {
+                return elseblock;
+            }
+
+            @Override
+            public int getOpcode() {
+                return IfElse_Expression;
+            }
+            @Override
+            public String toString() {
+                return "if("+this.getConditions().toString() + ")" + this.getIfblock().toString() + this.getElseblock().toString();
+            }
+        }
+
         public class Sig implements Expression{
             public String variable;
 
@@ -244,6 +283,46 @@ public class Syntax {
             }
         }
 
+        /**
+         * e==e
+         */
+        public class Conditional implements Expression {
+            public Expression lftoperand;
+            public Expression rghtoperand;
+
+            public String operator;
+            private int opcode = Conditional_Expression;
+
+            public Conditional(Expression lftoperand, Expression rghtoperand, String operator) {
+                this.lftoperand = lftoperand;
+                this.rghtoperand = rghtoperand;
+                this.operator = operator;
+            }
+
+            public Expression getLftoperand() {
+                return lftoperand;
+            }
+
+           public Expression getRghtoperand() {
+                return rghtoperand;
+            }
+
+            public String getOperator() {
+                return operator;
+            }
+
+
+            @Override
+            public int getOpcode() {
+                return opcode;
+            }
+
+
+            @Override
+            public String toString() {
+                return this.getLftoperand() + this.getOperator() + this.getRghtoperand();
+            }
+        }
 
         /**
          * Represents a group of statements, such as the following:

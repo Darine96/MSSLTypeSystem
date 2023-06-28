@@ -448,6 +448,62 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     /**
+     * R-Conditional
+     * (1) v1 == v2
+     * (2) v1 == e1
+     * (3) e1 == v1
+     * @param S
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<State, Expression> apply(State S, Lifetime lifetime, Conditional expression) {
+        Expression lft = expression.getLftoperand();
+        Expression rht = expression.getLftoperand();
+        String operator = expression.getOperator();
+        if(lft instanceof Value && rht instanceof Value){
+                Boolean compare = compare((Value) lft,(Value) rht,operator);
+            return new Pair<>(S, new Value.Boolean(compare));
+        } else if(lft instanceof Value){
+            Pair<State, Expression> result = apply(S, lifetime, rht);
+            return new Pair<>(result.first(), new Conditional(lft, result.second(), operator));
+        }else {
+            Pair<State, Expression> result = apply(S, lifetime, lft);
+            return new Pair<>(result.first(), new Conditional(result.second(), rht, operator));
+        }
+    }
+
+    /**
+     * R-Ifelse
+     * @param S
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<State, Expression> apply(State S, Lifetime lifetime, IfElse expression) {
+        Expression cond = expression.getConditions();
+        if(cond instanceof Value){
+            if(cond instanceof Value.Boolean){
+            Boolean b =  ((Value.Boolean) cond).value();
+                if(b){
+                    return new Pair<>(S, expression.getIfblock());
+                }else {
+                    return new Pair<>(S, expression.getElseblock());
+                }
+            }else {
+                //exception
+            }
+        }
+        else {
+            Pair<State, Expression> r1 = apply(S, lifetime, expression.getConditions());
+            return new Pair<>(r1.first(), new IfElse(r1.second(),expression.getIfblock(),expression.getElseblock()));
+        }
+        return  new Pair<>(S, expression);
+    }
+
+    /**
      * R-Watch
      * @param state
      * @param lifetime
@@ -701,4 +757,11 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         return -1;
     }
 
+    /*************** COMPZRE *************************/
+    public static Boolean compare(Value v1, Value v2, String op){
+        return v1==v2;
+    }
+
 }
+
+

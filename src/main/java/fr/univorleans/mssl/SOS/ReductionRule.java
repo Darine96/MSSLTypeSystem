@@ -37,8 +37,12 @@ public abstract class ReductionRule<T, S, E extends ReductionRule.Extension<T, S
                 return (Pair<T, S>) apply(state, lifetime, (Expression.Watch) expression);
             case Syntax.Clone_Expression:
                 return (Pair<T, S>) apply(state, lifetime, (Expression.Clone) expression);
+            case Syntax.IfElse_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.IfElse) expression);
             case Syntax.Borrow_Expression:
                 return (Pair<T, S>) apply(state, lifetime, (Expression.Borrow) expression);
+            case Syntax.Conditional_Expression:
+                return (Pair<T, S>) apply(state, lifetime, (Expression.Conditional) expression);
             case Syntax.Dereference_Expression:
                 return (Pair<T, S>) apply(state, lifetime, (Expression.Access) expression);
             case Syntax.Tuples_Expression:
@@ -79,6 +83,10 @@ public abstract class ReductionRule<T, S, E extends ReductionRule.Extension<T, S
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Emit expression);
 
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.When expression);
+
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Conditional expression);
+
+    protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.IfElse expression);
 
     protected abstract Pair<T, S> apply(T state, Lifetime lifetime, Expression.Watch expression);
 

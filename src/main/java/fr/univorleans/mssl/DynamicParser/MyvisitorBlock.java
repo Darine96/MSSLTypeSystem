@@ -208,9 +208,25 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         return new Syntax.Expression.Borrow(access.operand(), true);
     }
 
+    @Override public Expression.Conditional visitExpConditionals(msslParser.ExpConditionalsContext ctx) {
+        Expression lft = (Expression) this.visit(ctx.expr(0));
+        Expression rht = (Expression) this.visit(ctx.expr(1));
+        String operator = ctx.OPERATOR().getText();
+        return new Conditional(lft, rht, operator); }
+
     @Override public Syntax.Expression.Block visitExpBlock(msslParser.ExpBlockContext ctx) {
         this.visit(ctx);
         return new Syntax.Expression.Block(); }
+
+    @Override public Expression.IfElse visitExpIF(msslParser.ExpIFContext ctx) {
+        Expression cond = (Expression) this.visit(ctx.expr());
+        current_lifetime= current_lifetime.freshWithin();
+        Block ifblock = (Block) this.visit(ctx.block(0));
+        current_lifetime = current_lifetime.get();
+        current_lifetime= current_lifetime.freshWithin();
+        Block elseblock = (Block) this.visit(ctx.block(1));
+        current_lifetime = current_lifetime.get();
+        return new IfElse(cond,ifblock,elseblock); }
 
     @Override public Object visitTypInt(msslParser.TypIntContext ctx) { return visitChildren(ctx); }
 

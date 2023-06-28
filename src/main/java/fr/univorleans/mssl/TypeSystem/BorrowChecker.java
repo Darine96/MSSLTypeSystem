@@ -5,12 +5,9 @@ import fr.univorleans.mssl.Exception.ExceptionsMSG;
 import fr.univorleans.mssl.MSSL.Main;
 import fr.univorleans.mssl.SOS.Pair;
 import fr.univorleans.mssl.SOS.ReductionRule;
-import sun.jvm.hotspot.debugger.cdbg.Sym;
+import fr.univorleans.mssl.SOS.StoreProgram;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecker.Extension> {
 
@@ -539,6 +536,83 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         Type type = operand.second();
         //done
         return new Pair<>(gam1, type);
+    }
+
+    /**
+     * T-Conditionnal
+     * @param gam
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Conditional expression) {
+        // typed the left operand
+        Pair<Environment,Type> r1 = apply(gam, lifetime, expression.getLftoperand());
+            Environment gam1 = r1.first();
+            Type _t1 = r1.second();
+        // typed the right operand
+        // add the type _t1 as fresh variable
+        String fresh = BorrowChecker.fresh();
+        Pair<Environment,Type> r2 = apply(gam1.put(fresh, _t1,lifetime), lifetime, expression.getRghtoperand());
+            Environment gam2 = r2.first();
+            Type _t2 = r2.second();
+            //drop the fresh variable
+            Environment gam3= gam2.remove(fresh);
+        //(1) compare the compatibilty of _t1 and _t2
+        try {
+            check(!compatibleShape(gam2, _t1, _t2), "Incompatible Type");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        //(2) verify if _t1 and _t2 applies copy semantics
+        try {
+            check(!_t1.copyable(), "the type of this lval doesn't implement a copy semantic");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            check(!_t2.copyable(), "the type of this lval doesn't implement a copy semantic");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        return new Pair<>(gam1, Type.Bool);
+    }
+
+    /**
+     * T-IfElse
+     * @param gam
+     * @param lifetime
+     * @param expression
+     * @return
+     */
+    @Override
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.IfElse expression) {
+        //type the condition
+        Pair<Environment, Type> r1 = apply(gam, lifetime, expression.getConditions());
+            Environment gam1 = r1.first();
+            Type _t = r1.second();
+        // verify if condition is of type boolean
+
+        //type the if block
+        Pair<Environment, Type> r2 = apply(gam1, lifetime, expression.getIfblock());
+            Environment gam2 = r2.first();
+            Type _t1 = r2.second();
+        //type the else block
+        Pair<Environment, Type> r3 = apply(gam2, lifetime, expression.getElseblock());
+            Environment gam3 = r3.first();
+            Type _t2 = r3.second();
+
+        // ensure the compatibilities if _t1 and _t2
+        try {
+            check(!compatibleShape(gam2, _t1, _t2), "Incompatible Type");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        //join the environment
+        Environment gam4 = join(gam2, gam3, expression);
+        //join the type
+        return new Pair<>(gam4, _t1.union(_t2));
     }
 
     /**
@@ -1434,5 +1508,43 @@ protected boolean mut(Environment R, Lval w) {
      */
     public abstract static class Extension implements ReductionRule.Extension<Environment, Type> {
         protected BorrowChecker self;
+    }
+    /******************* JOIN eNVIRONMENT ***********************************************/
+    private Environment join(Environment gam1, Environment gam2, Syntax.Expression expression) {
+        Set<String> gam1Variables = gam1.bindings();
+        Set<String> gam2Variables = gam2.bindings();
+        /** verify if gam1Variables and gam2Variables have the same variables
+         */
+        //if no
+        try {
+            check(!compareInt(gam1Variables.size(),gam2Variables.size()), "Invalid Environments!");
+        } catch (ExceptionsMSG e) {
+            throw new RuntimeException(e);
+        }
+        // if yes, join the two environments
+        for(String var : gam1Variables) {
+            Location _v1 = gam1.get(var);
+            Location _v2 = gam2.get(var);
+            /**
+             * have the same lifetime?
+             */
+            try {
+                check(!compare(_v1.getLifetime(),_v2.getLifetime()), "The locations are not valid when you join the environment.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+            // compute the union type
+            Type type = _v1.getType().union(_v2.getType());
+            // Done
+            gam1 = gam1.put(var, type, _v1.getLifetime());
+        }
+        return gam1;
+    }
+
+    public static Boolean compare(Lifetime l1, Lifetime l2){
+        return l1 == l2;
+    }
+    public static Boolean compareInt(int l1, int l2){
+        return l1 == l2;
     }
 }

@@ -102,6 +102,13 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpBox(msslParser.ExpBoxContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code ExpConditionals}
+	 * labeled alternative in {@link msslParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpConditionals(msslParser.ExpConditionalsContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code ExpTrc}
 	 * labeled alternative in {@link msslParser#expr}.
 	 * @param ctx the parse tree
@@ -171,6 +178,13 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpClone(msslParser.ExpCloneContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpIF}
+	 * labeled alternative in {@link msslParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpIF(msslParser.ExpIFContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code TypInt}
 	 * labeled alternative in {@link msslParser#type_expression}.
