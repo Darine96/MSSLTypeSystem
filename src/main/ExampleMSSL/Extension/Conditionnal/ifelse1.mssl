@@ -1,7 +1,10 @@
 {
-    if(4==5){
-        let mut x = 0;
-    }else{
-        let mut y = 0;
-    };
+    let mut x = trc(0);
+    let mut a = x.clone;
+    {
+        let mut y = trc(0);
+        a = y.clone;
+    }
+    let mut b = x.clone;
+    //b = a;
 }

@@ -540,17 +540,15 @@ public interface Type {
         @Override
         public boolean within(BorrowChecker checker, Environment gam, Lifetime l) {
             boolean r = true;
+            //System.out.printf(" gam2 within "+gam.toString()+"\n");
             for (int i = 0; i != lvals.length; ++i) {
                 Lval ith = lvals[i];
                 if(gam.get(ith.name()) == null){
-                    System.out.printf("\n .UNDECLARED_VARIABLE \n");
+                    System.out.printf("\n .UNDECLARED_VARIABLE "+ith.name()+"\n");
                 }
                 Location location = gam.get(ith.name());
-                Type T1 = location.getType();
-                // NOTE: this differs from the presentation as, in fact, we don't need to type
-                // the lval fully.
                 // is equivalent to r = r && location.getLifetime().contains(l)
-                r &= T1.within(checker, gam, l);
+                r &= location.getLifetime().contains(l);
             }
             return r;
         }
@@ -903,8 +901,6 @@ public interface Type {
                     System.out.printf("\n .UNDECLARED_VARIABLE "+ith.name()+"\n");
                 }
                 Location location = gam.get(ith.name());
-                // NOTE: this differs from the presentation as, in fact, we don't need to type
-                // the lval fully.
                 // is equivalent to r = r && location.getLifetime().contains(l)
                 r &= location.getLifetime().contains(l);
             }
