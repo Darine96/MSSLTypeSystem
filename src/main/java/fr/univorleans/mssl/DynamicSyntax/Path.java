@@ -203,9 +203,9 @@ public class Path implements Comparable<Path> {
                 return new Pair<>(trc.getType(), lifetime);
             } else if(type instanceof Type.Clone){
                 // just one lval is enough to check
-                Lval lval = ((Type.Clone) type).lvals()[0];
-                Pair<Type, Lifetime> ith = lval.typeOf(env);
-                return ith;
+              //  Lval lval = ((Type.Clone) type).lvals()[0];
+              //  Pair<Type, Lifetime> ith = lval.typeOf(env);
+                return null;
             } else if (type instanceof Type.Borrow) {
                 Type.Borrow borrow = (Type.Borrow) type;
                 Lval[] lvals = borrow.lvals();

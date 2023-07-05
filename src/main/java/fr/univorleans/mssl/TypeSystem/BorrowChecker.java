@@ -216,7 +216,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     }
 
     /**
-     * T-Mut and T-IMMUTABLE
+     * T-Mutable and T-IMMUTABLE
      */
     @Override
     protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Borrow expression) {
@@ -681,6 +681,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }
+        System.out.println("\n clone "+omega.name());
         //Done
         return new Pair<>(gam, new Type.Clone(omega));
     }

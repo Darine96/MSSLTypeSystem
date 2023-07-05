@@ -1,0 +1,8 @@
+{
+    let mut x = trc(0);
+    let mut a = &mut x;
+    *a = trc(1);
+
+    let mut z = *a.clone;
+    *a = trc(2);
+}

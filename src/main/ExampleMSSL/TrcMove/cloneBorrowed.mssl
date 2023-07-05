@@ -1,0 +1,8 @@
+{
+    let mut x = trc(0);
+    let mut y = x.clone;
+
+    let mut a = & *y;
+    //let mut s = *a;
+    //print!(*a);
+}

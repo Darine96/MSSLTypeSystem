@@ -80,6 +80,7 @@ public class Lval implements Comparable<Lval>, Syntax.Expression {
     public Pair<Type, Lifetime> typeOf(Environment env) {
         Location Cx = env.get(name);
        //
+
         return (Cx == null) ? null : path.apply(env, Cx.getType(), Cx.getLifetime());
     }
 

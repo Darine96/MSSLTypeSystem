@@ -1,0 +1,13 @@
+{
+    let mut x = trc(0);
+
+    let mut y = x.clone;
+    let mut z = trc(0);
+
+    let mut a = &mut y;
+
+
+    *a = z.clone;
+
+    let mut b = x; // error, since the of y is \diamand (x,z): caused by weak update
+}

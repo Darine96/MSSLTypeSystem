@@ -1,0 +1,13 @@
+{
+    let mut x = 1;
+    let mut a= &x;
+
+    {
+        let mut y = trc(a);
+        let mut z = y.clone;
+        {let mut b= 0;
+        let mut c= &b;
+        *y=c;
+        }
+    }
+}
