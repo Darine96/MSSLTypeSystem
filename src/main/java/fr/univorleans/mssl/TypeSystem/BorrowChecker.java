@@ -1037,19 +1037,13 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             //
             if(T1 instanceof Type.Box) {
                 Type.Box T = (Type.Box) T1;
-                // NOTE: this prohibits a strong update when, in fact, it's always be possible
-                // to do this. It's not clear to me that this is always necessary or even
-                // desirable. However, at the time of writing, this mimics the Rust
-                // compiler.
+
                 Pair<Environment, Type> r = update(R, T.getType(), p, i + 1, T2, true);
                 // Done
                 return new Pair<>(r.first(), new Type.Box(r.second()));
             } else if (T1 instanceof Type.Trc) {
                 Type.Trc T = (Type.Trc) T1;
-                // NOTE: this prohibits a strong update when, in fact, it's always be possible
-                // to do this. It's not clear to me that this is always necessary or even
-                // desirable. However, at the time of writing, this mimics the Rust
-                // compiler.
+               
                 Pair<Environment, Type> r = update(R, T.getType(), p, i + 1, T2, true);
                 // Done
                 return new Pair<>(r.first(), new Type.Trc(r.second()));

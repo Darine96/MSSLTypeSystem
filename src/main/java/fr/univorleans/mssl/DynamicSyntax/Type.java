@@ -1072,10 +1072,7 @@ public interface Type {
 
         @Override
         public boolean prohibitsWriting(Lval lv) {
-            // NOTE: shadow types do not correspond with actual values and, instead, are
-            // used purely to retain knowledge of the "structure". Hence, they do not
-            // prohibit other types from being read/written.
-            return false;
+           return false;
         }
 
         @Override
