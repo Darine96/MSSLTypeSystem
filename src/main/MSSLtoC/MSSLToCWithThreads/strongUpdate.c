@@ -14,6 +14,8 @@ int main(int argc, char const *argv[]){
 	
 	*y=& z;
 	
+	x=1;
+	
 	free(y);
 	
 	return 0;

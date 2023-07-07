@@ -1043,7 +1043,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
                 return new Pair<>(r.first(), new Type.Box(r.second()));
             } else if (T1 instanceof Type.Trc) {
                 Type.Trc T = (Type.Trc) T1;
-               
+
                 Pair<Environment, Type> r = update(R, T.getType(), p, i + 1, T2, true);
                 // Done
                 return new Pair<>(r.first(), new Type.Trc(r.second()));
