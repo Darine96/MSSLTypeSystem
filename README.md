@@ -30,7 +30,8 @@ __________________
 2. In ` src/main/MSSLtoC/* ` directory, there are the Fairthread library and the Trc implementation in C
 3. To run the code :
    - make install the library ( in FT-Trc Library directory there is a readme)
-   - and then, ` gcc -Wall -O3 -D_REENTRANT -c code.c -I ./FT-TrcLibrary/include/ -L ./FT-TrcLibrary/lib/  -lfthread -lpthread  
-     gcc -Wall -O3 -D_REENTRANT code.o -o code -I ./FT-TrcLibrary/include -L ./FT-TrcLibrary/lib  -lfthread -lpthread 
-      ./code `
+   - and then: 
+     - ` gcc -Wall -O3 -D_REENTRANT -c code.c -I ./FT-TrcLibrary/include/ -L ./FT-TrcLibrary/lib/  -lfthread -lpthread `
+     - ` gcc -Wall -O3 -D_REENTRANT code.o -o code -I ./FT-TrcLibrary/include -L ./FT-TrcLibrary/lib  -lfthread -lpthread `
+     -  `  ./code`
 * Currently, the majority of examples on GitHub to test our contribution are centered around "Trc" instead of threaded scenarios. However, we have ongoing plans to consistently introduce new examples in the future.
