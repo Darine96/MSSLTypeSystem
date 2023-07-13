@@ -341,4 +341,72 @@ public interface Signature {
         }
     }
 
+
+    public class Borrow implements Signature{
+        private final String lifetime;
+        private final boolean mutable;
+        private final Signature signature;
+
+        public Borrow(String lifetime, boolean mutable, Signature signature) {
+            this.lifetime = lifetime;
+            this.mutable = mutable;
+            this.signature = signature;
+        }
+
+        public String getLifetime() {
+            return lifetime;
+        }
+
+        public boolean isMutable() {
+            return mutable;
+        }
+
+        public Signature getSignature() {
+            return signature;
+        }
+
+        @Override
+        public Pair<Environment, Type> lower(Environment gam, Lifetime l) {
+            return null;
+        }
+
+        @Override
+        public Type lift(Map<Signature, Type.Borrow> lifting) {
+            return null;
+        }
+
+        @Override
+        public boolean isSubtype(Environment env, Type type) {
+            return false;
+        }
+
+        @Override
+        public int refcount() {
+            return 0;
+        }
+
+        @Override
+        public boolean containsTrc() {
+            return false;
+        }
+
+        @Override
+        public int posTrc() {
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            return "&'" + lifetime + (mutable ? " mut " : " ") + signature.toString();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(o instanceof Signature.Borrow) {
+                Signature.Borrow _borrow = (Signature.Borrow) o;
+                return mutable == _borrow.mutable && lifetime.equals(_borrow.lifetime) && signature.equals(_borrow.signature);
+            }
+            return false;
+        }
+    }
 }

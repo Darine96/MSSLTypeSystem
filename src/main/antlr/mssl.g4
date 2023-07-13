@@ -3,7 +3,7 @@ grammar mssl;
 
 program: declaration* block EOF                                                         #Prog
        ;
-declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT signature block        #Declaration_function;
+declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT value signature block        #Declaration_function;
 
 params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)*         #ParamsFunc;
 signals: (SEMIC IDENTIFIER (COMMA IDENTIFIER)* )                                        #SignalsFunc;
@@ -13,8 +13,9 @@ signature: Unit                                                                 
          | Box LT signature GT                                                          #SigBox
          |Trc LT signature GT                                                           #SigTrc
          |Clone LT signature GT                                                         #SigClone
+         |Ref lif MUT? signature                                                        #SigRef
          ;
-
+lif: LIF IDENTIFIER                                                                     #Lifetime;
 expr: value                                                                             #ExpVal
    // | IDENTIFIER                                                                        #ExpIdentifier
     | expr Dot INTEGER                                                                  #ExpIndex
@@ -26,6 +27,7 @@ expr: value                                                                     
     | Trc LPAR expr RPAR                                                                #ExpTrc
     | LPAR (expr(COMMA expr)*)?RPAR                                                     #ExpTuple
     | Spawn LPAR IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR RPAR             #ExpInvoke
+    | IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR                             #ExpInvokeOutSpawn
     | Cooperate                                                                         #ExpCooperate
     | expr OPERATOR expr                                                                #ExpConditionals
     | IF LPAR expr RPAR block ELSE block                                                #ExpIF
@@ -100,6 +102,7 @@ Cooperate: 'cooperate';
 PRINT: 'print!';
 Mul: '*';
 Ref: '&';
+LIF:'\'';
 Dot:'.';
 IF:'if';
 ELSE:'else';

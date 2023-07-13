@@ -81,6 +81,20 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSigClone(msslParser.SigCloneContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code SigRef}
+	 * labeled alternative in {@link msslParser#signature}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSigRef(msslParser.SigRefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Lifetime}
+	 * labeled alternative in {@link msslParser#lif}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLifetime(msslParser.LifetimeContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code ExpBlock}
 	 * labeled alternative in {@link msslParser#expr}.
 	 * @param ctx the parse tree
@@ -171,6 +185,13 @@ public interface msslVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpDeref(msslParser.ExpDerefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpInvokeOutSpawn}
+	 * labeled alternative in {@link msslParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpInvokeOutSpawn(msslParser.ExpInvokeOutSpawnContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ExpClone}
 	 * labeled alternative in {@link msslParser#expr}.

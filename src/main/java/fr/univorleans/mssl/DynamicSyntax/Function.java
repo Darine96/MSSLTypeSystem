@@ -22,13 +22,13 @@ public class Function implements Syntax.Expression{
     public Boolean containsWhenWatch = false;
 
     public Function(String name, Pair<String, Signature>[] params,
-            String[] signals,Signature ret, Block body) {
+            String[] signals,Signature ret, Block body, int k) {
         this.name = name;
         this.params = params;
         this.signals=signals;
         this.ret = ret;
         this.body = body;
-        this.k = 0;
+        this.k = k;
     }
 
     public String getName() {
@@ -105,7 +105,7 @@ public class Function implements Syntax.Expression{
     }
     @Override
     public String toString() {
-        return "fn "+this.getName()+" ( "+toString_params()+toString_signals()+" ) -> "+this.ret.toString() +" "+this.getBody().toString()
+        return "fn "+this.getName()+" ( "+toString_params()+toString_signals()+" ) -> "+this.k+" "+this.ret.toString() +" "+this.getBody().toString()
                 ;
     }
 }

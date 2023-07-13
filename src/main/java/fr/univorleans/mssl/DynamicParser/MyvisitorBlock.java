@@ -79,7 +79,9 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         }
         //clear the environnment
         kindVariable.clear();
-        Function f = new Function(nameFunc, params.toArray(new Pair[params.size()]), signals,ret, body);
+        Object value = this.visit(ctx.value());
+        int k = Integer.parseInt(value.toString());
+        Function f = new Function(nameFunc, params.toArray(new Pair[params.size()]), signals,ret, body, k);
         if(WhenWatch){ f.containsWhenWatch=true; WhenWatch=false;  }
         return f; }
 
@@ -119,6 +121,17 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
     @Override public Signature.Clone visitSigClone(msslParser.SigCloneContext ctx) {
         Signature sig = (Signature) this.visit(ctx.signature());
         return new Signature.Clone(sig); }
+
+    @Override public Signature visitSigRef(msslParser.SigRefContext ctx) {
+        Signature sig = (Signature) this.visit(ctx.signature());
+        Boolean mut = false;
+        if(ctx.MUT()!=null){ mut = true;}
+        String lft = (String) this.visit(ctx.lif());
+        return new Signature.Borrow(lft, mut,sig); }
+
+    @Override public String visitLifetime(msslParser.LifetimeContext ctx) {
+        String lft = ctx.IDENTIFIER().toString();
+        return lft; }
 
 
     /************************************************************************************************************/
@@ -340,7 +353,28 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
             signals = (ArrayList<String>) this.visit(ctx.signals());
         }
         Syntax.Expression[] expressions = arguments.toArray(new Syntax.Expression[arguments.size()]);
-        return new InvokeFunction(name, expressions,signals.toArray(new String[signals.size()])); }
+        return new InvokeFunction(name, expressions,signals.toArray(new String[signals.size()]), true); }
+
+    @Override public InvokeFunction visitExpInvokeOutSpawn(msslParser.ExpInvokeOutSpawnContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        ArrayList<Syntax.Expression> arguments = new ArrayList<>();
+        for (int i=0; i<ctx.expr().size(); i++){
+            Syntax.Expression expression = (Syntax.Expression) this.visit(ctx.expr(i));
+            if(expression instanceof Syntax.Expression.Variable){
+                arguments.add(createLval(((Syntax.Expression.Variable) expression).getVariable()));
+            }
+            else {
+                arguments.add(expression);
+            }
+        }
+        ArrayList<String> signals = new ArrayList<>();
+        if(ctx.signals()!=null){
+            signals = (ArrayList<String>) this.visit(ctx.signals());
+        }
+        Syntax.Expression[] expressions = arguments.toArray(new Syntax.Expression[arguments.size()]);
+        return new InvokeFunction(name, expressions,signals.toArray(new String[signals.size()]), false); }
+
+
 
     /**
      * x =trc(0); y = x.clone; or x = box(trc(x)); y=*x.clone;

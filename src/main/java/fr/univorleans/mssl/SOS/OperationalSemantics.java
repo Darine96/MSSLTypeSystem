@@ -519,7 +519,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
 
 
     /**
-     * R-Spawn
+     * R-Spawn and R-invoke
      * @param state
      * @param lifetime
      * @param expression
@@ -531,12 +531,16 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         final String[] signals = expression.getSignals();
 
         int i = ExprNonValue(arguments);
+        Boolean check = expression.getCheck();
         /**
          * all arguments are values
          * All operands fully reduced, so perform invocation
          */
         if(i == -1){
-            return invoke(state, lifetime, expression.getName(), expression.getArguments(),signals);
+            /**
+             * check if the function is inside or outside the spawn expression (ture yes and false no)
+             */
+            return invoke(state, lifetime, expression.getName(), expression.getArguments(),signals, check);
         }
         else {
             Expression ith = arguments[i];
@@ -545,7 +549,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
 
             Expression[] nelements = Arrays.copyOf(arguments, arguments.length);
             nelements[i] = reduce.second();
-            return new Pair<>(reduce.first(), new InvokeFunction(expression.getName(), nelements,signals));
+            return new Pair<>(reduce.first(), new InvokeFunction(expression.getName(), nelements,signals, true));
         }
     }
 
@@ -672,7 +676,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     /**
      * invoke function
      */
-    private Pair<State, Expression> invoke(State state, Lifetime lifetime, String name, Expression[] arguments, String[] signals) {
+    private Pair<State, Expression> invoke(State state, Lifetime lifetime, String name, Expression[] arguments, String[] signals, Boolean check) {
         /**
          * recuperer la function
          */
@@ -683,7 +687,15 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
          * instantiated lifetime through global lifetime ( fresh lifetime into the global lifetime
          */
         Lifetime global = new Lifetime();
-        Block body =  instantiate(global, declaration.getBody());
+        Block body;
+        /**
+         * into the spawn
+         */
+        if(check) {
+           body =  instantiate(global, declaration.getBody());
+        }else{
+            body = instantiate(lifetime, declaration.getBody());
+        }
 
         /**
          * add a new stack frame into the State specific for the new thread

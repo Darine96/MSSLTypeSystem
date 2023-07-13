@@ -10,11 +10,14 @@ public class InvokeFunction implements Expression {
 
     private final String[] signals;
 
-    public InvokeFunction(String name, Expression[] expressions, String[] signals) {
+    private final Boolean check;
+
+    public InvokeFunction(String name, Expression[] expressions, String[] signals, Boolean check) {
 
         this.name = name;
         this.arguments = expressions;
         this.signals = signals;
+        this.check = check;
     }
 
 
@@ -38,9 +41,22 @@ public class InvokeFunction implements Expression {
         return Syntax.Invoke_Expression;
     }
 
+    /**
+     * check = true if the function call is inside the spawn;
+     * otherwise it is outside the spawn
+     * @return
+     */
+    public Boolean getCheck() {
+        return check;
+    }
+
     @Override
     public String toString() {
-        String r = spawn+"("+ name + "(";
+        String r ="";
+        if(check){
+            r = spawn+"("+ name + "(";}
+        else {
+            r = name + "(";}
         for (int i = 0; i != arguments.length; ++i) {
             if (i != 0) {
                 r += ",";
@@ -58,5 +74,6 @@ public class InvokeFunction implements Expression {
         }
         return r + "))";
     }
-}
+
+   }
 
