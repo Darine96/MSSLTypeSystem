@@ -25,7 +25,8 @@ public class OperationalSemanticsFunction extends OperationalSemantics.Extension
     }
 
     @Override
-    public Pair<State, Syntax.Expression> apply(State state, Lifetime lifetime, Syntax.Expression expression) {
+    public Pair<State, Syntax.Expression> apply(State state, Lifetime lifetime, int k) {
         return null;
     }
+
 }

@@ -36,7 +36,8 @@ public class BorrowCheckerFunction extends BorrowChecker{
     public Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, ArrayList<Function> functions) throws ExceptionsMSG {
         for (int i=0;i!=functions.size();++i){
             HashMap<String, Type> _map = new HashMap<>();
-            apply(lifetime,functions.get(i));
+            int k = functions.get(i).getK();
+            apply(lifetime,functions.get(i), k);
             _map.putAll(map);
             functions.get(i).getBody().put(_map);
             map.clear();
@@ -45,7 +46,7 @@ public class BorrowCheckerFunction extends BorrowChecker{
     }
 
 
-    protected void apply(Lifetime lifetime, Function function) throws ExceptionsMSG {
+    protected void apply(Lifetime lifetime, Function function, int k) throws ExceptionsMSG {
         //(1) récuperer les parametres
         Pair<String, Signature>[] params = function.getParams();
         String[] signals = function.getSignals();
@@ -93,7 +94,7 @@ public class BorrowCheckerFunction extends BorrowChecker{
             /** put map into block of the function **/
             function.getBody().put(map);
         //(5) // Type method body
-        Pair<Environment, Type> p = apply(gam, newLft, function.getBody());
+        Pair<Environment, Type> p = apply(gam, newLft, function.getBody(), k);
         //BorrowChecker.getGlobal().getMap().forEach((key, value) -> thirdMap.merge(key, value, String::concat));
         envf = envf.putALL(BorrowChecker.getGlobal());
         //reinitialise

@@ -13,6 +13,12 @@ public class Function implements Syntax.Expression{
     private final Signature ret;
     private final Block body;
 
+    private final int k;
+
+    public int getK() {
+        return k;
+    }
+
     public Boolean containsWhenWatch = false;
 
     public Function(String name, Pair<String, Signature>[] params,
@@ -22,6 +28,7 @@ public class Function implements Syntax.Expression{
         this.signals=signals;
         this.ret = ret;
         this.body = body;
+        this.k = 0;
     }
 
     public String getName() {

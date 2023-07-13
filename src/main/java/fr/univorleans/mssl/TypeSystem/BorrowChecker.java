@@ -70,8 +70,8 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    public Pair<Environment, Type> apply(Environment R1, Lifetime l, Syntax.Expression expression) {
-        Pair<Environment, Type> p = super.apply(R1, l, expression);
+    public Pair<Environment, Type> apply(Environment R1, Lifetime l, Syntax.Expression expression, int k) {
+        Pair<Environment, Type> p = super.apply(R1, l, expression, k);
         if (DEBUG) {
             Environment R2 = p.first();
             Type type = p.second();
@@ -91,18 +91,18 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
 
 
     @Override
-    protected Pair<Environment, Type> apply(Environment state, Lifetime lifetime, Value.Unit value) {
+    protected Pair<Environment, Type> apply(Environment state, Lifetime lifetime, Value.Unit value, int k) {
         // skip
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected Pair<Environment, Type> apply(Environment environment, Lifetime lifetime, Value.Integer value) {
+    protected Pair<Environment, Type> apply(Environment environment, Lifetime lifetime, Value.Integer value, int k) {
         return new Pair<>(environment, Type.Int);
     }
 
     @Override
-    protected Pair<Environment, Type> apply(Environment state, Lifetime lifetime, Value.Reference value) {
+    protected Pair<Environment, Type> apply(Environment state, Lifetime lifetime, Value.Reference value, int k) {
         // skip
         throw new UnsupportedOperationException();
     }
@@ -115,7 +115,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Access expression){
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Access expression, int k){
        Lval omega = expression.operand();
         /**
          * env |- omega : <type> tau </type>^m
@@ -208,9 +208,9 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Tuples.TuplesExpression expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Tuples.TuplesExpression expression, int k) {
         // Apply "carry typing" to type each operand
-        Pair<Environment,Type[]> p = carry(gam, lifetime, expression.getExpressions());
+        Pair<Environment,Type[]> p = carry(gam, lifetime, expression.getExpressions(), k);
         // Done
         return new Pair<>(p.first(), new Tuples.TuplesType(p.second()));
     }
@@ -219,7 +219,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * T-Mutable and T-IMMUTABLE
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Borrow expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Borrow expression, int k) {
         // premise (1)
         Lval omega = expression.getOperand();
         // Determine type being read
@@ -279,7 +279,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Declaration expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Declaration expression, int k) {
             // récuperer la variable
             String x = expression.getVariable();
             Location lx = gam1.get(x);
@@ -292,7 +292,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
                 }
             }
             //Type operand: expression
-            Pair<Environment, Type> operand = apply(gam1, lifetime, expression.getInitialiser());
+            Pair<Environment, Type> operand = apply(gam1, lifetime, expression.getInitialiser(), k);
             //recuperer le type then update gam1
             Environment gam2 = operand.first();
             Type type = operand.second();
@@ -312,9 +312,9 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Block expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Block expression, int k) {
         //typed the expression of block (1): first premise
-        Pair<Environment, Type> typing = apply(gam1, expression.getLifetime(), expression.getExprs());
+        Pair<Environment, Type> typing = apply(gam1, expression.getLifetime(), expression.getExprs(), k);
         Environment gam2 = typing.first();
         Type type = typing.second();
         //vérifier the second premise of subtyping
@@ -335,12 +335,12 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     /**
      * T-Seq
      */
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression[] expressions) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression[] expressions, int k) {
         Environment gamn = gam1;
         Type typen = Type.Unit;
         for (int i = 0; i != expressions.length; ++i) {
             // Type statement
-            Pair<Environment, Type> typing = apply(gamn, lifetime, expressions[i]);
+            Pair<Environment, Type> typing = apply(gamn, lifetime, expressions[i], k);
             // Update environment and discard type (as unused for statements)
             gamn = typing.first();
             typen = typing.second();
@@ -357,7 +357,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Assignment expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Assignment expression, int k) {
         Lval omega = expression.getLval();
         //premise 1: omega est bien typé dans gam1, existe dans gam1
         Pair<Type,Lifetime> typing_omega = omega.typeOf(gam1);
@@ -372,7 +372,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
        // System.out.printf("\n  type "+type1.toString());
         Lifetime omega_lifetime = typing_omega.second();
         //premise 2: typed operand
-        Pair<Environment, Type> typing_operand = apply(gam1, lifetime, expression.getExpr());
+        Pair<Environment, Type> typing_operand = apply(gam1, lifetime, expression.getExpr(), k);
         Environment gam2 = typing_operand.first();
         Type type2 = typing_operand.second();
         //premise 3: ensure if type and omega type have the same shape
@@ -415,9 +415,9 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Box expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Box expression, int k) {
         // one premise: type its operand
-        Pair<Environment, Type> typing = apply(gam1, lifetime, expression.getOperand());
+        Pair<Environment, Type> typing = apply(gam1, lifetime, expression.getOperand(), k);
         Environment gam2 = typing.first();
         Type type = typing.second();
         //
@@ -433,7 +433,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Sig expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Sig expression, int k) {
         // récuperer la variable
         String s = expression.getVariable();
         Location ls = gam1.get(s);
@@ -462,9 +462,9 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Trc expression) {
+    protected Pair<Environment, Type> apply(Environment gam1, Lifetime lifetime, Syntax.Expression.Trc expression, int k) {
         // first premise: type its operand
-        Pair<Environment, Type> typing = apply(gam1, lifetime, expression.getOperand());
+        Pair<Environment, Type> typing = apply(gam1, lifetime, expression.getOperand(), k);
         Environment gam2 = typing.first();
         Type type = typing.second();
         // second premise
@@ -485,7 +485,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Emit expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Emit expression, int k) {
         // récuperer la variable
         String s = expression.getVariable();
         Location ls = gam.get(s);
@@ -509,7 +509,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.When expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.When expression, int k) {
         // récuperer la variable
         String s = expression.getVariable();
         Location ls = gam.get(s);
@@ -523,14 +523,22 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         }
         System.out.println("\n\n hello \n\n");
         // safeTrc
-        try {
+        if(k == 1) {
+            try {
 
-            check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
-        } catch (ExceptionsMSG e) {
-            throw new RuntimeException(e);
+                check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            try {
+                check(true, "the k effect is different from 1, so it is not safe to cooperate");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
         }
         //Type operand: expression
-        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand());
+        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand(), k);
         //recuperer le type then update gam1
         Environment gam1 = operand.first();
         Type type = operand.second();
@@ -546,15 +554,15 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Conditional expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Conditional expression, int k) {
         // typed the left operand
-        Pair<Environment,Type> r1 = apply(gam, lifetime, expression.getLftoperand());
+        Pair<Environment,Type> r1 = apply(gam, lifetime, expression.getLftoperand(), k);
             Environment gam1 = r1.first();
             Type _t1 = r1.second();
         // typed the right operand
         // add the type _t1 as fresh variable
         String fresh = BorrowChecker.fresh();
-        Pair<Environment,Type> r2 = apply(gam1.put(fresh, _t1,lifetime), lifetime, expression.getRghtoperand());
+        Pair<Environment,Type> r2 = apply(gam1.put(fresh, _t1,lifetime), lifetime, expression.getRghtoperand(), k);
             Environment gam2 = r2.first();
             Type _t2 = r2.second();
             //drop the fresh variable
@@ -587,19 +595,19 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.IfElse expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.IfElse expression, int k) {
         //type the condition
-        Pair<Environment, Type> r1 = apply(gam, lifetime, expression.getConditions());
+        Pair<Environment, Type> r1 = apply(gam, lifetime, expression.getConditions(), k);
             Environment gam1 = r1.first();
             Type _t = r1.second();
         // verify if condition is of type boolean
 
         //type the if block
-        Pair<Environment, Type> r2 = apply(gam1, lifetime, expression.getIfblock());
+        Pair<Environment, Type> r2 = apply(gam1, lifetime, expression.getIfblock(), k);
             Environment gam2 = r2.first();
             Type _t1 = r2.second();
         //type the else block
-        Pair<Environment, Type> r3 = apply(gam2, lifetime, expression.getElseblock());
+        Pair<Environment, Type> r3 = apply(gam2, lifetime, expression.getElseblock(), k);
             Environment gam3 = r3.first();
             Type _t2 = r3.second();
 
@@ -610,7 +618,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             throw new RuntimeException(e);
         }
         //join the environment
-        Environment gam4 = join(gam2, gam3, expression);
+        Environment gam4 = join(gam2, gam3, expression, k);
         //join the type
         return new Pair<>(gam4, _t1.union(_t2));
     }
@@ -623,7 +631,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Watch expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Watch expression, int k) {
         // récuperer la variable
         String s = expression.getVariable();
         Location ls = gam.get(s);
@@ -636,7 +644,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             }
         }
         //Type operand: expression
-        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand());
+        Pair<Environment, Type> operand = apply(gam, lifetime, expression.getOperand(), k);
         //recuperer le type then update gam1
         Environment gam1 = operand.first();
         Type type = operand.second();
@@ -653,7 +661,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Clone expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Clone expression, int k) {
         //recuperer omega and be sure that omega have the t(rc type)
         Lval omega = expression.getOperand();
         // Determine type being read
@@ -694,11 +702,19 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      * @return
      */
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Cooperate expression) {
-        try {
-            check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
-        } catch (ExceptionsMSG e) {
-            throw new RuntimeException(e);
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Cooperate expression, int k) {
+        if(k==1) {
+            try {
+                check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            try {
+                check(true, "the k effect is different from 1, so it is not safe to cooperate");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
         }
         return new Pair<>(gam, new Type.Unit());
     }
@@ -713,7 +729,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      */
 
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, InvokeFunction expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, InvokeFunction expression, int k) {
         //premise 1: determine the function being invoked
         Function declaration = functions.get(expression.getName());
         if(declaration == null){
@@ -746,7 +762,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         }
 
         //premise (2) typed the arguments
-        Pair<Environment, Type[]> typedarguments = typedArguments(gam, lifetime, expression.getArguments());
+        Pair<Environment, Type[]> typedarguments = typedArguments(gam, lifetime, expression.getArguments(), k);
 
         //premise (3) : launch the mechanism
         Environment gam2 = typedarguments.first();
@@ -773,7 +789,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     }
 
     @Override
-    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Print expression) {
+    protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, Syntax.Expression.Print expression, int k) {
         //nothing to do
         return new Pair<>(gam, new Type.Unit());
     }
@@ -1210,11 +1226,14 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             Pair<Boolean, Type> C = type.ContainsRef(gam);
             if (C.first()) {
                 Type.Borrow B = (Type.Borrow) C.second();
-                Lval w = B.lvals()[0];
-                Location Cx = gam.get(w.name());
-                Boolean travers =  traversTrc(gam, Cx.getType(), w.path(), 0);
-                if (travers){
-                    return false;
+                Lval[] w = B.lvals();
+                for (int i =0; i!= w.length; ++i) {
+                    Lval wi = B.lvals()[i];
+                    Location Cx = gam.get(wi.name());
+                    Boolean travers =  traversTrc(gam, Cx.getType(), wi.path(), 0);
+                    if (travers){
+                        return false;
+                    }
                 }
             }
         }
@@ -1252,15 +1271,23 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             // Check path element is dereference
             Path.Deref d = (Path.Deref) p.get(i);
             Lval[] borrows = t.lvals();
-            // Determine type of first borrow
-            Type Tj = borrows[0].typeOf(R).first();
-            // NOTE: is safe to ignore other lvals because every lval must have a compatible
-            // type.
-                return traversTrc(R, Tj, p, i + 1);
+            // Determine type of all borrows
+            for(int r=0;r!= borrows.length;++r){
+                Type Tj = borrows[r].typeOf(R).first();
+                Boolean check = traversTrc(R, Tj, p, i + 1);
+                if(check){
+
+                    return check;
+                }
+                // type.
+               // return traversTrc(R, Tj, p, i + 1);
+            }
+
 
         } else {//clone
             return false;
         }
+        return false;
     }
 /******************************** Mut and Mutable *******************************************************/
 protected boolean mut(Environment R, Lval w) {
@@ -1337,7 +1364,7 @@ protected boolean mut(Environment R, Lval w) {
      * @return Final environment after right-most term, along with a type for each
      *         term.
      */
-    public Pair<Environment,Type[]> typedArguments(Environment gam1, Lifetime l, Syntax.Expression[] expressions) {
+    public Pair<Environment,Type[]> typedArguments(Environment gam1, Lifetime l, Syntax.Expression[] expressions, int k) {
         String[] vars =fresh(expressions.length);
         Type[] types = new Type[expressions.length];
         Environment gam = gam1;
@@ -1345,7 +1372,7 @@ protected boolean mut(Environment R, Lval w) {
         for(int i=0;i!=expressions.length;++i) {
             Syntax.Expression ith = expressions[i];
             // Type left-hand side
-            Pair<Environment, Type> p1 = apply(gam, l, ith);
+            Pair<Environment, Type> p1 = apply(gam, l, ith, k);
             Type Tn = p1.second();
             gam = p1.first();
             // Add type into environment temporarily
@@ -1468,7 +1495,7 @@ protected boolean mut(Environment R, Lval w) {
      * @param expressions
      * @return
      */
-    public Pair<Environment,Type[]> carry(Environment gam, Lifetime lifetime, Syntax.Expression[] expressions) {
+    public Pair<Environment,Type[]> carry(Environment gam, Lifetime lifetime, Syntax.Expression[] expressions, int k) {
         String[] vars = BorrowChecker.fresh(expressions.length);
         Type[] types = new Type[expressions.length];
         Environment gamn = gam;
@@ -1476,7 +1503,7 @@ protected boolean mut(Environment R, Lval w) {
         for(int i=0;i!=expressions.length;++i) {
             Syntax.Expression ith = expressions[i];
             // Type left-hand side
-            Pair<Environment, Type> p1 = apply(gamn, lifetime, ith);
+            Pair<Environment, Type> p1 = apply(gamn, lifetime, ith, k);
             Type Tn = p1.second();
             gamn = p1.first();
             // Add type into environment temporarily
@@ -1505,7 +1532,7 @@ protected boolean mut(Environment R, Lval w) {
         protected BorrowChecker self;
     }
     /******************* JOIN eNVIRONMENT ***********************************************/
-    private Environment join(Environment gam1, Environment gam2, Syntax.Expression expression) {
+    private Environment join(Environment gam1, Environment gam2, Syntax.Expression expression, int k) {
         Set<String> gam1Variables = gam1.bindings();
         Set<String> gam2Variables = gam2.bindings();
         /** verify if gam1Variables and gam2Variables have the same variables

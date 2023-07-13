@@ -79,7 +79,7 @@ public class ExtensionMain {
             int functionNBthreads = getNBthreads();
             BorrowChecker typing =  new BorrowChecker(false, "Declaration", visitor.declarations);
             //System.out.printf("\n block "+ block.toString());
-            typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block);
+            typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block, 0);
             /*******************************************************/
             /**************** Semantics and reduction rules ********/
          /*   OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);

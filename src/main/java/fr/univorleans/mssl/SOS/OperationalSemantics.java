@@ -50,7 +50,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @param expression
      * @return
      */
-    public final Expression execute(Lifetime l, Expression expression) {
+    public final Expression execute(Lifetime l, Expression expression, int k) {
        // Execute block in outermost lifetime "*" that have a global lifetime)
         /**
          * selon les règle de reduction un état est composé de S et expression e
@@ -67,7 +67,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         Expression e = null;
         do {
          //   System.out.printf("expression "+ expression.toString());
-            state = apply(state.first(), l, state.second());
+            state = apply(state.first(), l, state.second(), k);
             e = state.second();
         }while (e != null && !(e instanceof Value));
         /**
@@ -82,8 +82,8 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     @Override
-    public Pair<State, Expression> apply(State S, Lifetime l, Expression expression) {
-        Pair<State,Expression> state = super.apply(S,l,expression);
+    public Pair<State, Expression> apply(State S, Lifetime l, Expression expression, int k) {
+        Pair<State,Expression> state = super.apply(S,l,expression, k);
         return state;
     }
 
@@ -237,7 +237,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
 
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Assignment expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Assignment expression, int k) {
             if (expression.getExpr() instanceof Value) {
                 /**
                  * x = 5;
@@ -249,7 +249,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
                  * x = 5+1;
                  */
                 /** Statement not ready to be reduced yet */
-                Pair<State, Expression> rhs = apply(state, lifetime, expression.getExpr());
+                Pair<State, Expression> rhs = apply(state, lifetime, expression.getExpr(),k);
                 /** Construct reduce statement */
                 expression = new Assignment(expression.getLval(), rhs.second());
 
@@ -258,14 +258,14 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Block expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Block expression, int k) {
         final int n = expression.getExprs().length;
 
         if (n > 0) {
             /**
              * reduce the first expression
              */
-            Pair<State, Expression> p = apply(state, expression.getLifetime(), expression.getExprs()[0]);
+            Pair<State, Expression> p = apply(state, expression.getLifetime(), expression.getExprs()[0], k);
             Expression e = p.second();
             state = p.first();
             if (e instanceof Value) {
@@ -312,18 +312,18 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Cooperate expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Cooperate expression, int k) {
         return new Pair<>(state, Unit);
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Box expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Box expression, int k) {
         if (expression.getOperand() instanceof Value) {
             /** Statement can be completely reduced */
             return reduceBox(state, lifetime, (Value) expression.getOperand());
         } else {
             /** Statement not ready to be reduced yet */
-            Pair<State, Expression> rhs = apply(state, lifetime, expression.getOperand());
+            Pair<State, Expression> rhs = apply(state, lifetime, expression.getOperand(), k);
             /** Construct reduce statement */
             expression = new Box(rhs.second());
 
@@ -339,7 +339,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Sig expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Sig expression, int k) {
         /** get the global lifetime */
         Lifetime global = lifetime.getRoot();
        /**
@@ -366,13 +366,13 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Trc expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Trc expression, int k) {
         if (expression.getOperand() instanceof Value) {
             /** Statement can be completely reduced */
             return reduceTrc(state, lifetime, (Value) expression.getOperand());
         } else {
             /** Statement not ready to be reduced yet */
-            Pair<State, Expression> rhs = apply(state, lifetime, expression.getOperand());
+            Pair<State, Expression> rhs = apply(state, lifetime, expression.getOperand(), k);
             /** Construct reduce statement */
             expression = new Trc(rhs.second());
 
@@ -388,7 +388,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Emit expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Emit expression, int k) {
         /**
          * (1) get the value of signal
          */
@@ -426,7 +426,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, When expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, When expression, int k) {
         /** read the value of s **/
         String s = expression.getVariable();
         Path.Element[] es = new Path.Element[1];
@@ -441,7 +441,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         }
        /** R-whenTrue **/
        else{
-           Pair<State,Expression> S = apply(state,lifetime,expression.getOperand());
+           Pair<State,Expression> S = apply(state,lifetime,expression.getOperand(), k);
            return new Pair<>(S.first(), S.second());
         }
 
@@ -458,7 +458,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State S, Lifetime lifetime, Conditional expression) {
+    protected Pair<State, Expression> apply(State S, Lifetime lifetime, Conditional expression, int k) {
         Expression lft = expression.getLftoperand();
         Expression rht = expression.getLftoperand();
         String operator = expression.getOperator();
@@ -466,10 +466,10 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
                 Boolean compare = compare((Value) lft,(Value) rht,operator);
             return new Pair<>(S, new Value.Boolean(compare));
         } else if(lft instanceof Value){
-            Pair<State, Expression> result = apply(S, lifetime, rht);
+            Pair<State, Expression> result = apply(S, lifetime, rht, k);
             return new Pair<>(result.first(), new Conditional(lft, result.second(), operator));
         }else {
-            Pair<State, Expression> result = apply(S, lifetime, lft);
+            Pair<State, Expression> result = apply(S, lifetime, lft, k);
             return new Pair<>(result.first(), new Conditional(result.second(), rht, operator));
         }
     }
@@ -482,7 +482,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State S, Lifetime lifetime, IfElse expression) {
+    protected Pair<State, Expression> apply(State S, Lifetime lifetime, IfElse expression, int k) {
         Expression cond = expression.getConditions();
         if(cond instanceof Value){
             if(cond instanceof Value.Boolean){
@@ -497,7 +497,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
             }
         }
         else {
-            Pair<State, Expression> r1 = apply(S, lifetime, expression.getConditions());
+            Pair<State, Expression> r1 = apply(S, lifetime, expression.getConditions(), k);
             return new Pair<>(r1.first(), new IfElse(r1.second(),expression.getIfblock(),expression.getElseblock()));
         }
         return  new Pair<>(S, expression);
@@ -511,9 +511,9 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Watch expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Watch expression, int k) {
         /** determine if the signal given in parameter existe **/
-        Pair<State,Expression> S = apply(state,lifetime,expression.getOperand());
+        Pair<State,Expression> S = apply(state,lifetime,expression.getOperand(), k);
         return new Pair<>(S.first(), S.second());
     }
 
@@ -526,7 +526,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, InvokeFunction expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, InvokeFunction expression, int k) {
         final Expression[] arguments = expression.getArguments();
         final String[] signals = expression.getSignals();
 
@@ -541,7 +541,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         else {
             Expression ith = arguments[i];
             /** Reduce the expression */
-            Pair<State, Expression> reduce = this.apply(state, lifetime, ith);
+            Pair<State, Expression> reduce = this.apply(state, lifetime, ith, k);
 
             Expression[] nelements = Arrays.copyOf(arguments, arguments.length);
             nelements[i] = reduce.second();
@@ -557,14 +557,14 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Clone expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Clone expression, int k) {
         return reduceClone(state, lifetime, expression.getOperand());
     }
     /**
      * Let x = e or Let x = v
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Declaration expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Declaration expression, int k) {
         /** check if the Declaration instruction is completely reduced: let x = v; */
         if(expression.getInitialiser() instanceof Value){
             Value v = (Value) expression.getInitialiser();
@@ -572,7 +572,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         }
         else {
             /** if the Declaration instruction is not completely reduced; let x = e; */
-            Pair<State, Expression> pair = apply(state, lifetime, expression.getInitialiser());
+            Pair<State, Expression> pair = apply(state, lifetime, expression.getInitialiser(), k);
 
             expression = new Declaration(expression.getVariable(), pair.second());
             return new Pair<>(pair.first(), expression);
@@ -582,12 +582,12 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Borrow expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Borrow expression, int k) {
         return reduceBorrow(state, lifetime, expression.getOperand());
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Access expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Access expression, int k) {
         if(expression.copy()) {
             return reduceCopy(state, lifetime, expression.operand());
         } else {
@@ -606,7 +606,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
      * @return
      */
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Tuples.TuplesExpression expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Tuples.TuplesExpression expression, int k) {
         final Expression[] expressions = expression.getExpressions();
         /**
          * determine if all expressions in this tuple are reduced
@@ -622,7 +622,7 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
         } else {
             Expression ith = expressions[i];
             // lhs is fully reduced
-            Pair<State, Expression> p = apply(state, lifetime, ith);
+            Pair<State, Expression> p = apply(state, lifetime, ith, k);
             //
             Expression[] nelements = Arrays.copyOf(expressions, expressions.length);
             nelements[i] = p.second();
@@ -631,22 +631,22 @@ public class OperationalSemantics extends ReductionRule<State, Expression, Opera
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Unit value) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Unit value, int k) {
         return null;
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Value.Integer value) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Value.Integer value, int k) {
         return null;
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Value.Reference value) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Value.Reference value, int k) {
         return null;
     }
 
     @Override
-    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Print expression) {
+    protected Pair<State, Expression> apply(State state, Lifetime lifetime, Print expression, int k) {
         return new Pair<>(state, Unit);
     }
 

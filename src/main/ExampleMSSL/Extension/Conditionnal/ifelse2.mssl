@@ -1,0 +1,12 @@
+{
+    let mut x = trc(0);
+    let mut y = 1;
+    let mut b = 0;
+    let mut a = &mut y;
+    if(1 == 1){
+        a = &mut b;
+    }else{
+        a = &mut *x;
+    };
+    cooperate;
+}
