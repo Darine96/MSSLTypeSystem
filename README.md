@@ -10,7 +10,7 @@ _________________________________
 3. exp: ` v | n | expr.n | lval.clone | &[mut] lval | box(exp) | trc(exp) `
        ` (exp,exp,*) | spawn(f(exp)) | exp* | exp (==) exp | 
           if(cond) block else block | cooperate | Sig s | emit(s) | when(s) block | watch(s) block | print!(lval)  `      
-4. lval: ` x | *x `
+4. lval: ` x | *x | lval.k `
 
 * Testing
 __________________
