@@ -180,7 +180,7 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
      @Override public Syntax.Expression visitExpDeref(msslParser.ExpDerefContext ctx) {
         Lval lval;
         Syntax.Expression.Access access;
-        if(ctx.Mul()!= null){
+        //if(ctx.Mul()!= null){
             /** (*exp)
              * the number of star e.g: *x or **x or ***x, etc
              * Access
@@ -190,13 +190,21 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
             Lval lval1 = new Lval(lval.name(), append(lval.path(), Path.DEREF_ELEMENT));
             return Syntax.Expression.Access.construct(lval1, kindVariable.contains(lval1.name()));
 
-        }
-        else {
+       // }
+       /* else {
             // identifier
             String identifier = ctx.getText();
             // creat a path to the lval
             lval = createLval(identifier);
-            return Syntax.Expression.Access.construct(lval, kindVariable.contains(lval.name())); }
+            return Syntax.Expression.Access.construct(lval, kindVariable.contains(lval.name())); }*/
+    }
+
+    @Override public Syntax.Expression visitExpIdentifier(msslParser.ExpIdentifierContext ctx) {
+        // identifier
+        String identifier = ctx.getText();
+        // creat a path to the lval
+        Lval lval = createLval(identifier);
+        return Syntax.Expression.Access.construct(lval, kindVariable.contains(lval.name()));
     }
     @Override public Syntax.Expression.Cooperate visitExpCooperate(msslParser.ExpCooperateContext ctx) {
         this.visit(ctx.Cooperate());

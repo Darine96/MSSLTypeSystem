@@ -662,6 +662,46 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     }
 
     @Override
+    protected Expression apply(Expression.Conditional expression) {
+        apply(expression.lftoperand);
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+            writer.println(expression.operator);
+            writer.close();
+        } catch (IOException ie) {
+            System.out.println("An error occurred.");
+            ie.printStackTrace();
+        }
+        apply(expression.rghtoperand);
+        return null;
+    }
+
+    @Override
+    protected Expression apply(Expression.IfElse expression) {
+        String s = expression.getConditions().toString();
+        String _s = s.replace("^", "");
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+            writer.print("\tif("+_s+")");
+            writer.close();
+        } catch (IOException ie) {
+            System.out.println("An error occurred.");
+            ie.printStackTrace();
+        }
+        apply(expression.getIfblock());
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+            writer.print("\telse");
+            writer.close();
+        } catch (IOException ie) {
+            System.out.println("An error occurred.");
+            ie.printStackTrace();
+        }
+        apply(expression.getElseblock());
+        return null;
+    }
+
+    @Override
     protected Syntax.Expression apply(InvokeFunction expression) {
         //(0) get the function
         String name= expression.getName();

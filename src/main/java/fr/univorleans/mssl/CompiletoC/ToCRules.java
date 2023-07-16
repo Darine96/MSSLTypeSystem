@@ -43,6 +43,10 @@ public abstract class ToCRules< E extends ToCRules.ExtensionToC> {
                 return  apply((Expression.When) expression);
             case Syntax.Watch_Expression:
                 return  apply((Expression.Watch) expression);
+            case Syntax.Conditional_Expression:
+                return  apply((Expression.Conditional) expression);
+            case Syntax.IfElse_Expression:
+                return  apply((Expression.IfElse) expression);
             case Syntax.Emit_Expression:
                 return  apply((Expression.Emit) expression);
             case Value.Unit_Expression:
@@ -68,6 +72,9 @@ public abstract class ToCRules< E extends ToCRules.ExtensionToC> {
     protected abstract Expression apply(Expression.Box expression);
 
     protected abstract Expression apply(Expression.Trc expression);
+
+    protected abstract Expression apply(Expression.Conditional expression);
+    protected abstract Expression apply(Expression.IfElse expression);
 
     protected abstract Expression apply(InvokeFunction expression);
 

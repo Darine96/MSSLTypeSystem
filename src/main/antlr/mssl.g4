@@ -3,7 +3,7 @@ grammar mssl;
 
 program: declaration* block EOF                                                         #Prog
        ;
-declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT value signature block        #Declaration_function;
+declaration: FN IDENTIFIER LPAR (params)? (signals)? RPAR Sub GT value signature block  #Declaration_function;
 
 params: MUT IDENTIFIER COLON signature ( COMMA MUT IDENTIFIER COLON signature)*         #ParamsFunc;
 signals: (SEMIC IDENTIFIER (COMMA IDENTIFIER)* )                                        #SignalsFunc;
@@ -18,19 +18,21 @@ signature: Unit                                                                 
 lif: LIF IDENTIFIER                                                                     #Lifetime;
 expr: value                                                                             #ExpVal
    // | IDENTIFIER                                                                        #ExpIdentifier
+    | IF LPAR expr RPAR block ELSE block                                                #ExpIF
     | expr Dot INTEGER                                                                  #ExpIndex
     | (IDENTIFIER | Mul expr ) Dot Clone                                                #ExpClone
-    | (IDENTIFIER | Mul expr )                                                          #ExpDeref
+    | IDENTIFIER                                                                        #ExpIdentifier
+ //   | (IDENTIFIER | Mul expr )                                                          #ExpDeref
+    | Mul expr                                                                          #ExpDeref
     | Ref expr                                                                          #ExpSharedRef
     | Ref MUT expr                                                                      #ExpMutableRef
     | Box LPAR expr RPAR                                                                #ExpBox
     | Trc LPAR expr RPAR                                                                #ExpTrc
     | LPAR (expr(COMMA expr)*)?RPAR                                                     #ExpTuple
+    | expr OPERATOR expr                                                                #ExpConditionals
     | Spawn LPAR IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR RPAR             #ExpInvoke
     | IDENTIFIER LPAR (expr (COMMA expr)*)? (signals)? RPAR                             #ExpInvokeOutSpawn
     | Cooperate                                                                         #ExpCooperate
-    | expr OPERATOR expr                                                                #ExpConditionals
-    | IF LPAR expr RPAR block ELSE block                                                #ExpIF
    // | expr  (SEMIC expr SEMIC?)                         #ExpSequence
     | block                                                                             #ExpBlock
     | PRINT LPAR ((DoubleQuote IDENTIFIER DoubleQuote) | (Mul* IDENTIFIER) | ((DoubleQuote IDENTIFIER DoubleQuote PLUS IDENTIFIER)(PLUS DoubleQuote IDENTIFIER DoubleQuote)*))  RPAR        #ExpPrint
@@ -48,9 +50,9 @@ instructions: instruction*                                                      
 instruction: declVar                                                                    #InstLet
            | expr EQ expr SEMIC                                                         #InstAssignment
            | expr SEMIC                                                                 #InstExpr
-           | Emit LPAR IDENTIFIER RPAR  SEMIC                                                #InstEmit
-           | When LPAR IDENTIFIER RPAR block                                             #InstWhen
-           | Watch LPAR IDENTIFIER RPAR block                                            #InstWatch
+           | Emit LPAR IDENTIFIER RPAR  SEMIC                                           #InstEmit
+           | When LPAR IDENTIFIER RPAR block                                            #InstWhen
+           | Watch LPAR IDENTIFIER RPAR block                                           #InstWatch
            | Sig IDENTIFIER SEMIC                                                       #InstSig
 //           |expr SEMIC (SEMIC expr)*                          # InstSequence
            | block                                                                      #InstBlock
