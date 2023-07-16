@@ -1,0 +1,10 @@
+{
+    let mut x = box(0);
+    let mut y = box(1);
+
+    if(*x == *y){
+        print!(*x);
+    }else{
+        print!(*y);
+    };
+}

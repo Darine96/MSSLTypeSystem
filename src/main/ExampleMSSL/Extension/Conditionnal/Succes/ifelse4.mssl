@@ -1,0 +1,10 @@
+{
+    let mut x = 0;
+    let mut y = 1;
+
+    if(&x == &y){
+        print!(x);
+    }else{
+        print!(y);
+    };
+}
