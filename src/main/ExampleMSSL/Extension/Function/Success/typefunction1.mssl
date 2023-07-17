@@ -1,0 +1,10 @@
+fn f1(mut x:&'a int, mut y: clone<int>)-> 0 unit
+{
+    let mut b = y;
+    let mut a = 0;
+    Sig s1;
+    f1(&a, b);
+}
+{
+let mut x = 1;
+}

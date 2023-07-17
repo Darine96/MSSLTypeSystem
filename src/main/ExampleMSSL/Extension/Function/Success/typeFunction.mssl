@@ -1,0 +1,10 @@
+fn f1(mut x:int, mut y: trc<int>; s)-> 1 unit
+{
+    let mut b = y;
+    let mut a = 0;
+    Sig s1;
+    f1(a, b;s1);
+}
+{
+let mut x = 1;
+}
