@@ -317,7 +317,9 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         }
         else {
             // let mut x = y...
-            kindVariable.put(var, kindVariable.contains(var));
+            Access access = (Access) e;
+            Lval lval = access.operand();
+            kindVariable.put(var, kindVariable.contains(lval.name()));
         }
 
         return declaration; }
@@ -499,8 +501,13 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
 
     private Boolean deduceKind(Signature signature){
         if(signature instanceof Signature.Box || signature instanceof Signature.Clone || signature instanceof Signature.Trc){
-            return true;
+          return true;
 
+        }else if(signature instanceof Signature.Borrow){
+            Signature.Borrow sig = (Signature.Borrow) signature;
+            if(sig.isMutable()){
+                return true;
+            }
         }
         return false;
     }

@@ -127,9 +127,9 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         /**
          * message errors
          */
-        // vérifier si omega est bien typé: i.e. n'est pas mové udefiend type!
+        // vérifier si omega est bien typé: i.e. n'est pas mové undefiend type!
             try {
-                check(!type.defined(), "Lval is moved");
+                check(!type.defined(), omega.name()+" is moved");
             } catch (ExceptionsMSG e) {
                 throw new RuntimeException(e);
             }
@@ -720,7 +720,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     }
 
     /**
-     * T-Spawn
+     * T-Spawn and T-Function
      * we have the mechanism that ensure: the compatibilities between type and signature/ the invariant of the Trc
      * @param gam
      * @param lifetime
@@ -732,6 +732,10 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     protected Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, InvokeFunction expression, int k) {
         //premise 1: determine the function being invoked
         Function declaration = functions.get(expression.getName());
+        /**
+         * true if the function call into spawn and false otherwise
+         */
+        Boolean check = expression.getCheck();
         if(declaration == null){
             try {
                 check(true, " unknown function");
@@ -753,8 +757,8 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         //compare the signals arguments given by the signals parameters of the function
        String[] signals = declaration.getSignals();
         String[] signalsarguments = expression.getSignals();
-        System.out.println("\n\n signals parameters "+signals.length);
-        System.out.println("\n\n signals arguments "+signalsarguments.length);
+      /*  System.out.println("\n\n signals parameters "+signals.length);
+        System.out.println("\n\n signals arguments "+signalsarguments.length);*/
         try {
             check((signals.length != signalsarguments.length), "The number of signal's arguments is incompatible with the number of signal's parameters!");
         } catch (ExceptionsMSG e) {
@@ -764,28 +768,85 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         //premise (2) typed the arguments
         Pair<Environment, Type[]> typedarguments = typedArguments(gam, lifetime, expression.getArguments(), k);
 
-        //premise (3) : launch the mechanism
+        /**
+         *   premise (3) : launch the mechanism when check is true (i.e. within the spawn)
+         */
+
         Environment gam2 = typedarguments.first();
         Type[] args = typedarguments.second();
 
         //premise (3.1): we have already sure that each lval is well typed in gam2
-        //premise (3.2): the compatibilities between types and signatures
-        /**
-         * in our case, we have juste three form of the signatures: unit, int, box, active trc
-         * sig trc is compatible with clone type but it is not compatible with trc type
-         */
-        try {
-            check(!compatibleSigType(parameters, args, gam2), " Incompatible Argument(s)!");
-        } catch (ExceptionsMSG e) {
-            throw new RuntimeException(e);
+        /** into the spawn **/
+        if(check) {
+            //premise (3.2): verify if there exists two inactive trc pointing to the same memory location
+            try {
+                check(!invariantTrcSpawn(args, gam2), "Having two inactive Trcs pointing to the same memory location!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+
+            //premise (3.3): verify if there exists an active Trc or reference type
+            try {
+                check(!invariantTrcSpawn(args, gam2), "Having two inactive Trcs pointing to the same memory location!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+            //premise (3.4): verify if there exists two inactive trc pointing to the same memory location
+            try {
+                check(!containsType(args, gam2), "It is forbidden to have an active Trc or a reference in the arguments!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+
+            //premise (3.2): the compatibilities between types and signatures
+            /**
+             * in our case, we have the form of the signatures: unit, int, bool, box, active trc, inactive trc and borrow
+             * verify the compatibility between signatures and types
+             */
+            try {
+                check(!compatibleSigType(parameters, args, gam2), " Incompatible Argument(s)!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+            return new Pair<>(gam2, Type.Unit);
+        }else {
+
+            /******************** outiside the spawn *****************/
+            try {
+                check(!compatibleSigType(parameters, args, gam2), " Incompatible Argument(s)!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+
+            // verify if we have an active Trc and an inactive Trc in the arguments
+            try {
+                check(!activeAndinactiveTrc(args, gam2), " Incompatible Argument(s)!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
+               //T-invokeB
+            if(k==1 && declaration.getK() == 1){
+                  try {
+                        check(!SafeTrc(gam), "Borrowed shared data exists, it's not safe to cooperate!");
+                    } catch (ExceptionsMSG e) {
+                        throw new RuntimeException(e);
+                    }
+            }else{
+                    try {
+
+                        check(true, "the effect k must be 1!");
+                    } catch (ExceptionsMSG e) {
+                        throw new RuntimeException(e);
+                    }
+            }
+            /** Apply lifting **/
+            Type returnType = ReturnType(declaration,gam2,lifetime,args);
+            /** Apply side effects ***/
+             Environment gam3 = liftSideEffects(declaration, gam2, lifetime, args);
+
+            return new Pair<>(gam3, returnType);
         }
-        //premise (3.3): verify if there exists two inactive trc pointing to the same memory location
-        try {
-            check(!invariantTrcSpawn(args, gam2), "Having two inactive Trcs pointing to the same memory location!");
-        } catch (ExceptionsMSG e) {
-            throw new RuntimeException(e);
-        }
-        return new Pair<>(gam2, Type.Unit);
+
     }
 
     @Override
@@ -801,7 +862,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     /***** COPY SEMANTICS ***/
     public boolean isCopy(Syntax.Expression.Access expression, Type type) {
         if (copyInference) {
-            // int and &w have the copy semantics
+            // int, bool and &w have the copy semantics
             boolean r = type.copyable();
             expression.infer(r ? Syntax.Expression.Access.Kind.COPY : Syntax.Expression.Access.Kind.MOVE);
             return r;
@@ -1412,6 +1473,23 @@ protected boolean mut(Environment R, Lval w) {
         }
         return freshVars;
     }
+/************************************ Function Call **********************************************/
+    /**
+     * verify if we have f(x.clone, x)
+     * @param arguments
+     * @param gam
+     * @return
+     */
+    public Boolean activeAndinactiveTrc(Type[] arguments, Environment gam) {
+        for(int i =0; i!= arguments.length;++i){
+            if(arguments[i].NotWellDefinedClone(gam)){
+                return true;
+            }
+
+            }
+               return false;
+        }
+
 
     /**
      * compatibilities beteween signatures and types
@@ -1421,19 +1499,213 @@ protected boolean mut(Environment R, Lval w) {
      * @return
      */
     public Boolean compatibleSigType(Pair<String, Signature>[] parameters, Type[] arguments, Environment gam) {
+            // Retrieve all recognized abstract lifetimes.
+            String[] abstractl = extractLifetimes(parameters);
+            // Retrieve all accessible concrete lifetimes.
+            Lifetime[] concretel = extractLifetimes(gam, arguments);
 
-
+        /** List all possible bindings. **/
+        label:
+        for(Map<String,Lifetime> suitable : generatebinding(abstractl,concretel)) {
             for (int i = 0; i != arguments.length; ++i) {
                 Signature sith = parameters[i].second();
                 Type tith = arguments[i];
-                if(!sith.isSubtype(gam, tith)) {
-                    return false;
+                if(!sith.isSubtype(gam, tith, suitable)) {
+                    continue label;
                 }
             }
+            // Candidate Done!
+           /* if (!suitable.isEmpty()){
+                System.out.println("\n\n isEmpty "+suitable.isEmpty()+"\n\n\n");
+            }*/
+            return !suitable.isEmpty();
+        }
             // Done
-            return true;
+            return false;
     }
 
+    public String[] extractLifetimes(Pair<String, Signature>[] parameters) {
+        ArrayList<String> lifetimes = new ArrayList<>();
+        for(int i=0;i!=parameters.length;++i) {
+            Signature ith = parameters[i].second();
+           /* if(ith instanceof Signature.Borrow){
+                if(!lifetimes.contains(((Signature.Borrow) ith).getLifetime())){
+                    lifetimes.add(((Signature.Borrow) ith).getLifetime());
+                }
+            }*/
+            ith.match(Signature.Borrow.class, b -> !lifetimes.add(b.getLifetime()));
+        }
+        String[] ls = lifetimes.toArray(new String[lifetimes.size()]);
+        return ls;
+    }
+
+    private static Lifetime[] extractLifetimes(Environment R, Type[] arguments) {
+        ArrayList<Lifetime> lifetimes = new ArrayList<>();
+        for(int i=0;i!=arguments.length;++i) {
+            arguments[i].consume(Type.Borrow.class, b -> extractLifetimes(R,b.lvals(),lifetimes));
+        }
+        Lifetime[] ls = lifetimes.toArray(new Lifetime[lifetimes.size()]);
+        return ls;
+    }
+
+    private static void extractLifetimes(Environment R, Lval[] lvals, List<Lifetime> lifetimes) {
+        for (int i = 0; i != lvals.length; ++i) {
+            Lval w = lvals[i];
+            Pair<Type, Lifetime> p = w.typeOf(R);
+            // Record lifetime
+            lifetimes.add(p.second());
+            // Continue traversal
+            p.first().consume(Type.Borrow.class, b -> extractLifetimes(R, b.lvals(), lifetimes));
+        }
+    }
+
+    private static Iterable<Map<String,Lifetime>> generatebinding(String[] abstractl, Lifetime[] concretel) {
+        ArrayList<Map<String,Lifetime>> results = new ArrayList<>();
+        generate(0, new int[abstractl.length], abstractl, concretel, results);
+        return results;
+    }
+
+    private static void generate(int i, int[] mapping, String[] abstracts, Lifetime[] concretes, List<Map<String,Lifetime>> candidates) {
+        if(i == mapping.length) {
+            // Base case
+            HashMap<String,Lifetime> binding = new HashMap<>();
+            for(int j=0;j!=mapping.length;++j) {
+                binding.put(abstracts[j], concretes[mapping[j]]);
+            }
+            candidates.add(binding);
+        } else {
+            for (int j = 0; j != concretes.length; ++j) {
+                mapping[i] = j;
+                generate(i + 1, mapping, abstracts, concretes, candidates);
+            }
+        }
+    }
+
+    private Type ReturnType(Function decl, Environment gam, Lifetime lifetime, Type[] args) {
+        return lift(decl.getRet(),decl.getParams(),gam,lifetime,args);
+    }
+
+    private Type lift(Signature target, Pair<String, Signature>[] params, Environment R, Lifetime l, Type[] args) {
+        Map<String, Lifetime> binding = construct(l, params);
+        ArrayList<Signature.Borrow> holes = new ArrayList<>();
+        // Identify borrows which need to be lifted
+        target.match(Signature.Borrow.class, b -> holes.add(b));
+        // Construct the "lifting"
+        HashMap<Signature.Borrow, Type.Borrow> lifting = new HashMap<>();
+        for (Signature.Borrow hole : holes) {
+            for (int j = 0; j != args.length; ++j) {
+                lift(params[j].second(), R, args[j], hole, binding, lifting);
+            }
+        }
+        //
+        return target.lift(lifting);
+    }
+
+    private void lift(Signature param, Environment R, Type arg, Signature.Borrow hole,
+                      Map<String, Lifetime> binding, Map<Signature.Borrow, Type.Borrow> lifting) {
+        if(param instanceof Signature.Box) {
+            Signature.Box sb = (Signature.Box) param;
+            Type.Box tb = (Type.Box) arg;
+            lift(sb.getOperand(), R, tb.getType(), hole, binding, lifting);
+        }else if(param instanceof Signature.Trc) {
+            Signature.Trc sb = (Signature.Trc) param;
+            Type.Trc tb = (Type.Trc) arg;
+            lift(sb.getOperand(), R, tb.getType(), hole, binding, lifting);
+        }else if(param instanceof Signature.Clone) {
+            // to complete
+        }else if(param instanceof Signature.Borrow) {
+            Signature.Borrow sb = (Signature.Borrow) param;
+            Type.Borrow tb = (Type.Borrow) arg;
+            //
+            if (hole.isSubtype(binding, sb)) {
+                // match!
+                Type.Borrow b = lifting.get(hole);
+                if (b != null) {
+                    lifting.put(hole, (Type.Borrow) b.union(tb));
+                } else {
+                    lifting.put(hole, tb);
+                }
+            } else {
+                // no match, continue traversing
+                for (Lval lv : tb.lvals()) {
+                    Pair<Type, Lifetime> p = lv.typeOf(R);
+                    lift(sb.getSignature(), R, p.first(), hole, binding, lifting);
+                }
+            }
+        } else {
+            // do nothing for other cases
+        }
+    }
+
+    private Map<String,Lifetime> construct(Lifetime l, Pair<String,Signature>[] params) {
+        // Our lifetime must be within all others
+        Lifetime lifetime = new Lifetime(l);
+        // Extract all lifetimes
+        HashMap<String, Lifetime> suitable = new HashMap<>();
+        Environment gam = BorrowChecker.EMPTY_ENVIRONMENT;
+        // Lower parameters into environment
+        for (int i = 0; i != params.length; ++i) {
+            Signature s = params[i].second();
+            // Lower signature into environment
+            Pair<Environment, Type> r = s.lower(gam, suitable, lifetime);
+            gam = r.first();
+        }
+        //
+        return suitable;
+    }
+
+    private Environment liftSideEffects(Function declaration, Environment gam, Lifetime lifetime, Type[] args) {
+        Pair<String,Signature>[] params = declaration.getParams();
+        // Generate set of all possible side-effects
+        ArrayList<Pair<Signature.Borrow, Type.Borrow>> effects = new ArrayList<>();
+        for(int i=0;i!=params.length;++i) {
+            liftSideEffects(params[i].second(), gam, args[i], effects);
+        }
+        // Apply all possible side-effects
+        for(int i=0;i!=effects.size();++i) {
+            Signature.Borrow sb = effects.get(i).first();
+            Type.Borrow tb = effects.get(i).second();
+            // Determine anything which could be written
+            Type e = lift(sb.getSignature(), params, gam, lifetime, args);
+            // Update targets with possible write
+            for(Lval w : tb.lvals()) {
+                gam = write(gam, w, e, false);
+            }
+        }
+        //
+        return gam;
+    }
+
+    private void liftSideEffects(Signature signature, Environment gam, Type arg,
+                                 List<Pair<Signature.Borrow, Type.Borrow>> effects) {
+        if (signature instanceof Signature.Box) {
+            Signature.Box sb = (Signature.Box) signature;
+            Type.Box tb = (Type.Box) arg;
+            liftSideEffects(sb.getOperand(), gam, tb.getType(), effects);
+        }else if (signature instanceof Signature.Trc) {
+            Signature.Trc sb = (Signature.Trc) signature;
+            Type.Trc tb = (Type.Trc) arg;
+            liftSideEffects(sb.getOperand(), gam, tb.getType(), effects);
+        }else if (signature instanceof Signature.Clone) {
+            //à completer
+        }
+        else if (signature instanceof Signature.Borrow) {
+            Signature.Borrow sb = (Signature.Borrow) signature;
+            Type.Borrow tb = (Type.Borrow) arg;
+            // Check for mutable borrow
+            if (sb.isMutable()) {
+                // Matched!
+                for (Lval w : tb.lvals()) {
+                    Pair<Type, Lifetime> p = w.typeOf(gam);
+                    liftSideEffects(sb.getSignature(), gam, p.first(), effects);
+                }
+                //
+                effects.add(new Pair<>(sb, tb));
+            }
+        }
+    }
+
+/*************************************************************************************************************/
     /**
      * return index
      */
@@ -1484,6 +1756,16 @@ protected boolean mut(Environment R, Lval w) {
         return true;
     }
 
+    public Boolean containsType(Type[] arguments, Environment gam) {
+            for(int i =0; i!= arguments.length; ++i){
+                if(arguments[i].ContainsTrc(gam) || arguments[i].ContainsRef(gam).first()){
+                    return true;
+                }
+            }
+            return false;
+    }
+
+
 
     /*****************************************************************************************************
      *                                  CARRY TYPE: to a given sequence of expressions.
@@ -1529,7 +1811,7 @@ protected boolean mut(Environment R, Lval w) {
      *
      */
     public abstract static class Extension implements ReductionRule.Extension<Environment, Type> {
-        protected BorrowChecker self;
+        public BorrowChecker self;
     }
     /******************* JOIN eNVIRONMENT ***********************************************/
     private Environment join(Environment gam1, Environment gam2, Syntax.Expression expression, int k) {

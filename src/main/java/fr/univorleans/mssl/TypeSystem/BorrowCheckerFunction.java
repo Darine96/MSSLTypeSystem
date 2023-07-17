@@ -53,24 +53,26 @@ public class BorrowCheckerFunction extends BorrowChecker{
         /**
          * check the shape of the signatures
          */
-        check(!shapeSignature(params), "Incompatible Signatures!");
+        /** no need when we add the extension! **/
+        //check(!shapeSignature(params), "Incompatible Signatures!");
         //(2) Create a global lifetime
         Lifetime newLft = new Lifetime(lifetime);
         //(3) create a new empty environment
         Environment gam = BorrowChecker.EMPTY_ENVIRONMENT;
-
+        //(4) to compute a suitable type
+        HashMap<String, Lifetime> suitable = new HashMap<>();
         /**
          * to compiletoC
          */
         Environment envf = BorrowChecker.EMPTY_ENVIRONMENT;
-        //(4) Lower parameter into environment, in our case we haven't
+        //(4) Suitable Types, specially for borrow and inactive Trc
         for (int i = 0; i != params.length; ++i) {
             String p = params[i].first();
             Signature s = params[i].second();
-            // Lower signature into environment
-            Pair<Environment, Type> r = s.lower(gam, newLft);
+            // return a suitable type
+            Pair<Environment, Type> r = s.lower(gam, suitable, newLft);
             gam = r.first();
-            // Bind parameter to resulting type
+            // put the resulting type into gam
             gam = gam.put(p, new Location(r.second(), newLft));
             /*** necessary to compileToC **/
             envf = envf.put(p, new Location(r.second(), newLft));
@@ -94,14 +96,14 @@ public class BorrowCheckerFunction extends BorrowChecker{
             /** put map into block of the function **/
             function.getBody().put(map);
         //(5) // Type method body
-        Pair<Environment, Type> p = apply(gam, newLft, function.getBody(), k);
+        Pair<Environment, Type> p = super.apply(gam, newLft, function.getBody(), k);
         //BorrowChecker.getGlobal().getMap().forEach((key, value) -> thirdMap.merge(key, value, String::concat));
         envf = envf.putALL(BorrowChecker.getGlobal());
         //reinitialise
         BorrowChecker.global=EMPTY_ENVIRONMENT;
         envFunctions.put(function.getName(), envf);
         //(6) Check type compatibility ( in our case we have not a return function)
-        if(!function.getRet().isSubtype(p.first(),p.second())){
+        if(!function.getRet().isSubtype(p.first(),p.second(), suitable)){
             System.out.printf("The type of the function is incompatible with the type of its body!");
         }
     }

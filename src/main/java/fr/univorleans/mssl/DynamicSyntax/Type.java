@@ -7,6 +7,7 @@ import fr.univorleans.mssl.TypeSystem.Location;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.function.Consumer;
 
 public interface Type {
      /**
@@ -69,6 +70,8 @@ public interface Type {
      */
     public Undefined undefine();
 
+    public <T extends Type> void consume(Class<T> type, Consumer<T> consumer);
+
     /**
      * Determine whether this type prohibits a given lval from being read. For
      * example, if this type mutable borrows the lval then it cannot be read.
@@ -109,6 +112,8 @@ public interface Type {
      * @return
      */
     public Pair<Boolean, Type> ContainsRef(Environment gam);
+
+    public boolean NotWellDefinedClone(Environment gam);
 
     /**
      *
@@ -219,6 +224,11 @@ public interface Type {
         }
 
         @Override
+        public boolean NotWellDefinedClone(Environment gam) {
+            return false;
+        }
+
+        @Override
         public String free(String name, int i, String free, int pos) {
             return free;
         }
@@ -247,6 +257,13 @@ public interface Type {
         public Type returnType(Environment gam, int count) {
             return this;
         }
+
+        @Override
+        public <T extends Type> void consume(Class<T> type, Consumer<T> consumer) {
+            if (type == getClass()) {
+                consumer.accept((T) this);
+            }
+        }
     }
 
     public class Unit extends AbstractType{
@@ -267,6 +284,7 @@ public interface Type {
         public Sig() {
         }
 
+
         @Override
         public boolean equals(Object o) {
             return o instanceof Type.Sig;
@@ -286,6 +304,7 @@ public interface Type {
             return o instanceof Type.Int;
         }
 
+
         @Override
         public String toString() {
             return "int";
@@ -300,6 +319,7 @@ public interface Type {
         public boolean equals(Object o) {
             return o instanceof Type.Bool;
         }
+
 
         @Override
         public String toString() {
@@ -326,6 +346,11 @@ public interface Type {
         @Override
         public boolean ContainsTrc(Environment gam) {
             return type.ContainsTrc(gam);
+        }
+
+        @Override
+        public boolean NotWellDefinedClone(Environment gam) {
+            return type.NotWellDefinedClone(gam);
         }
 
         @Override
@@ -360,6 +385,13 @@ public interface Type {
         @Override
         public boolean TrcSafe(Environment gam) {
             return type.TrcSafe(gam);
+        }
+
+
+        @Override
+        public <T extends Type> void consume(Class<T> type, Consumer<T> consumer) {
+            super.consume(type, consumer);
+            getType().consume(type, consumer);
         }
 
 
@@ -468,6 +500,11 @@ public interface Type {
         }
 
         @Override
+        public boolean NotWellDefinedClone(Environment gam) {
+            return type.NotWellDefinedClone(gam);
+        }
+
+        @Override
         public String free(String name, int i, String free, int pos){
             free = "_destroy("+ "*".repeat(i)+name+");"+free;
             i++;
@@ -479,7 +516,11 @@ public interface Type {
         public boolean within(BorrowChecker borrowChecker, Environment gam, Lifetime l) {
             return type.within(borrowChecker, gam, l);
         }
-
+        @Override
+        public <T extends Type> void consume(Class<T> type, Consumer<T> consumer) {
+            super.consume(type, consumer);
+            getType().consume(type, consumer);
+        }
         /**
          * trc(box(int)) return box(int) etc..
          * @param gam
@@ -582,6 +623,13 @@ public interface Type {
             }*/
             return type;
         }
+
+        @Override
+        public Pair<Boolean, Type> ContainsRef(Environment gam) {
+            Type _t = lvals()[0].typeOf(gam).first();
+            return _t.ContainsRef(gam);
+        }
+
 
         @Override
         public int refcount(Environment gam) {
@@ -753,6 +801,17 @@ public interface Type {
         }
 
         @Override
+        public boolean NotWellDefinedClone(Environment gam) {
+            for(int j =0; j!= lvals().length;++j) {
+                Type _t = lvals[j].typeOf(gam).first();
+                if(_t instanceof Type.Undefined){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
         public String toString() {
             return "#" + toString(lvals);
 
@@ -824,6 +883,16 @@ public interface Type {
             }
             return false;
         }
+
+        @Override
+        public boolean NotWellDefinedClone(Environment gam) {
+            for(int j =0; j!= lvals().length;++j) {
+                Type _t = lvals[j].typeOf(gam).first();
+                return _t.NotWellDefinedClone(gam);
+            }
+                return false;
+        }
+
 
         @Override
         public boolean TrcSafe(Environment gam) {
@@ -989,6 +1058,8 @@ public interface Type {
                     return sortedRemoveDuplicates(children);
             }
         }
+
+
         @Override
         public Type union(Type t) {
 
@@ -1055,6 +1126,11 @@ public interface Type {
 
         public Type getType() {
             return type;
+        }
+
+        @Override
+        public <T extends Type> void consume(Class<T> type, Consumer<T> consumer) {
+            // NOTE: don't need to do anything here really.
         }
 
         @Override
