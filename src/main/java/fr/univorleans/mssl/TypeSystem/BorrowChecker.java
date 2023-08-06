@@ -1523,6 +1523,7 @@ protected boolean mut(Environment R, Lval w) {
         /** List all possible bindings. **/
         label:
         for(Map<String,Lifetime> suitable : generatebinding(abstractl,concretel)) {
+            System.out.println("\n\n taille of generated "+ generatebinding(abstractl,concretel).toString());
 
             for (int i = 0; i != arguments.length; ++i) {
                 Signature sith = parameters[i].second();
@@ -1531,11 +1532,11 @@ protected boolean mut(Environment R, Lval w) {
                     continue label;
                 }
             }
-
+            System.out.println("\n\n suitable "+ suitable.toString());
             // Candidate Done!
-          // if (suitable.isEmpty()){
-                //System.out.println("\n\n isEmpty "+suitable.toString()+"\n\n\n");
-           // }
+           /*if (!suitable.isEmpty()){
+                System.out.println("\n\n isEmpty "+suitable.toString()+"\n\n\n");
+           }*/
             if(abstractl.length!=0) {
                 return !suitable.isEmpty();
             }else {
@@ -1804,15 +1805,30 @@ protected boolean mut(Environment R, Lval w) {
                                  List<Pair<Signature.Borrow, Type.Borrow>> effects) {
         if (signature instanceof Signature.Box) {
             Signature.Box sb = (Signature.Box) signature;
+            try {
+                check(!(arg instanceof Type.Box), "Type incompatible with Signature.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
             Type.Box tb = (Type.Box) arg;
             liftSideEffects(sb.getOperand(), gam, tb.getType(), effects);
         }else if (signature instanceof Signature.Trc) {
             Signature.Trc sb = (Signature.Trc) signature;
+            try {
+                check(!(arg instanceof Type.Trc), "Type incompatible with Signature.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
             Type.Trc tb = (Type.Trc) arg;
             liftSideEffects(sb.getOperand(), gam, tb.getType(), effects);
         }else if (signature instanceof Signature.Clone) {
             //à completer
             Signature.Clone sb = (Signature.Clone) signature;
+            try {
+                check(!(arg instanceof Type.Clone), "Type incompatible with Signature.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
             Type.Clone tb = (Type.Clone) arg;
             // Check for mutable borrow
                 // Matched!
@@ -1826,6 +1842,11 @@ protected boolean mut(Environment R, Lval w) {
         }
         else if (signature instanceof Signature.Borrow) {
             Signature.Borrow sb = (Signature.Borrow) signature;
+            try {
+                check(!(arg instanceof Type.Borrow), "Type incompatible with Signature.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
             Type.Borrow tb = (Type.Borrow) arg;
             // Check for mutable borrow
             if (sb.isMutable()) {

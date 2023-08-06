@@ -622,11 +622,13 @@ public interface Signature {
                         Type T = p.first();
                         Lifetime m = p.second();
                        /** Verify the covariance and contravariance. **/
+                        //System.out.println("\n\n into subtypeeeeeeee "+ m.contains(l) +"    "+lv.name());
                         if (!m.contains(l) || !signature.isSubtype(R, T, suitable)) {
                             return false;
-                        } else if(mutable && (!l.contains(m) || !signature.isSupertype(R, T, suitable))) {
+                        }else if(mutable && (!signature.isSupertype(R, T, suitable))) {
+                        //else if(mutable && (!l.contains(m) || !signature.isSupertype(R, T, suitable))) {
                             // mutable borrows are invariant.
-                            System.out.println("\n\n into subtypeeeeeeee "+ !signature.isSupertype(R, T, suitable));
+                            System.out.println("\n\n into subtypeeeeeeee "+ l.contains(m));
                             return false;
                         }
                     }

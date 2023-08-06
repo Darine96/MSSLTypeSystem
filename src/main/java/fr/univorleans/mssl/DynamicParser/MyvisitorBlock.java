@@ -327,12 +327,18 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
                 Lval lval = access.operand();
                 kindVariable.put(var, kindVariable.contains(lval.name()));
             }
-            /*else{
+            else{
                 // let mut x = f(x,y);
                 InvokeFunction f = (InvokeFunction) e;
                 Signature ret = FunctionsReturnType.get(f.getName());
-                if(ret instanceof Signature.Box || ret instanceof Signature.Trc || ret instanceof Signature.Clone ||)
-            }*/
+                if(ret instanceof Signature.Box || ret instanceof Signature.Trc || ret instanceof Signature.Clone){
+                    kindVariable.put(var,true);
+                }else if(ret instanceof Signature.Borrow && (((Signature.Borrow) ret).isMutable()) ){
+                    kindVariable.put(var,true);
+                }else {
+                    kindVariable.put(var,false);
+                }
+            }
         }
 
         return declaration; }
