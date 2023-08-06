@@ -1,0 +1,10 @@
+fn f1(mut x: &'a int, mut y:&'a int) ->0 &'a int{
+    x;
+}
+{
+    let mut x = 0;
+     {
+         let mut y = 0; let mut a = f1(&x,&y);
+         let mut b = a;
+     }
+}

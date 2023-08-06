@@ -1,0 +1,12 @@
+fn f1(mut x: clone<int>, mut y: clone<int>)->0 clone<int>{
+    y;
+}
+
+{
+    let mut x = trc(0);
+    {
+    let mut y = trc(0);
+    let mut a = y.clone;
+        a = f1(y.clone, x.clone);
+    }
+}

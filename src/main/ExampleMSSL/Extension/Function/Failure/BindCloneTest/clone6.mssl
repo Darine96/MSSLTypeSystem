@@ -1,0 +1,10 @@
+fn f1(mut x: &'a mut trc<int>, mut y:&'b mut clone<int>) ->0 unit{
+    *y= *x.clone;
+}
+{
+    let mut x = trc(0);
+    let mut y = trc(0);
+    let mut a = y.clone;
+    f1(&mut x, &mut a);
+
+}

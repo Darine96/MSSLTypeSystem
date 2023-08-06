@@ -1,0 +1,8 @@
+fn f1(mut x: trc<int>, mut y: box<clone<int>>) ->0 unit{
+}
+
+{
+    let mut x = trc(0);
+    let mut y = trc(0);
+    f1(x, box(x));
+}

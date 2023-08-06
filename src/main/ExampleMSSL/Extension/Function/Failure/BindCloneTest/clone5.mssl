@@ -1,0 +1,8 @@
+fn f1(mut x: &'a mut trc<int>) ->0 clone<int>{
+     *x.clone;
+}
+{
+    let mut x = trc(0);
+    f1(&mut x);
+
+}

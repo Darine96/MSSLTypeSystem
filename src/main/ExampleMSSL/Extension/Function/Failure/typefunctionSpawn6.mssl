@@ -1,0 +1,15 @@
+fn f3(mut x: trc<int>, mut y:trc<int>) ->0 unit{
+
+}
+
+fn f2(mut x: trc<int>, mut y:clone<int>) ->0 unit{
+    spawn(f3(x.clone,y));
+}
+
+fn f1(mut x: trc<int>) ->0 unit{
+    let mut y = x.clone; f2(x,y);
+}
+
+{
+   f1(trc(0));
+}

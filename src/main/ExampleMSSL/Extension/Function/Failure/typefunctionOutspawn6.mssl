@@ -1,0 +1,19 @@
+fn f1(mut x: &'c mut &'c int)->0 unit {
+
+}
+
+fn f2(mut x: &'a mut &'b int) ->0 unit {
+
+ f1(x);
+ }
+
+{
+    let mut x = 1;
+ //{
+      //  let mut y = &x;
+          //  {
+          //      let mut z = &mut y;
+          //      f2(z);
+          //  }
+       // }
+}
