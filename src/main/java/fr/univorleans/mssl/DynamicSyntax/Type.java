@@ -100,11 +100,18 @@ public interface Type {
     public boolean prohibitsTrcMoving(Lval lv);
 
     /**
-     * determine if a type contains a Trc type
+     * determine if a type contains a Clone type
      * @param gam
      * @return
      */
     public boolean ContainsTrc(Environment gam);
+
+    /**
+     * determine if a type contains a Trc type
+     * @param gam
+     * @return
+     */
+    public boolean ContainsTrcType(Environment gam);
 
     /**
      * determine if this type contains a borrow type
@@ -215,6 +222,11 @@ public interface Type {
 
         @Override
         public boolean ContainsTrc(Environment gam) {
+            return false;
+        }
+
+        @Override
+        public boolean ContainsTrcType(Environment gam) {
             return false;
         }
 
@@ -346,6 +358,11 @@ public interface Type {
         @Override
         public boolean ContainsTrc(Environment gam) {
             return type.ContainsTrc(gam);
+        }
+
+        @Override
+        public boolean ContainsTrcType(Environment gam) {
+            return type.ContainsTrcType(gam);
         }
 
         @Override
@@ -495,6 +512,11 @@ public interface Type {
         }
 
         @Override
+        public boolean ContainsTrcType(Environment gam) {
+            return true;
+        }
+
+        @Override
         public boolean TrcSafe(Environment gam) {
             return type.TrcSafe(gam);
         }
@@ -580,6 +602,7 @@ public interface Type {
 
         @Override
         public boolean within(BorrowChecker checker, Environment gam, Lifetime l) {
+
             boolean r = true;
             //System.out.printf(" gam2 within "+gam.toString()+"\n");
             for (int i = 0; i != lvals.length; ++i) {
@@ -587,9 +610,11 @@ public interface Type {
                 if(gam.get(ith.name()) == null){
                     System.out.printf("\n .UNDECLARED_VARIABLE "+ith.name()+"\n");
                 }
-                Location location = gam.get(ith.name());
+                Pair<Type,Lifetime> ith_get = ith.typeOf(gam);
+               // Location location = gam.get(ith.name());
                 // is equivalent to r = r && location.getLifetime().contains(l)
-                r &= location.getLifetime().contains(l);
+                r &= ith_get.second().contains(l);
+                //r &= location.getLifetime().contains(l);
             }
             return r;
         }
@@ -757,7 +782,6 @@ public interface Type {
         }
         @Override
         public Type union(Type t) {
-
             if (t instanceof Undefined) {
                 return t.union(this);
             } else if (t instanceof Clone) {
@@ -920,12 +944,21 @@ public interface Type {
             // NOTE: mutable borrows have linear semantics.
             return !mut;
         }
+        @Override
         public boolean ContainsTrc(Environment gam){
             Lval lval =lvals[0];//is enough to test one lval
             String x = lval.name();
             Location location = gam.get(x);
             Type type = location.getType();
             return type.ContainsTrc(gam);
+        }
+        @Override
+        public boolean ContainsTrcType(Environment gam){
+            Lval lval =lvals[0];//is enough to test one lval
+            String x = lval.name();
+            Location location = gam.get(x);
+            Type type = location.getType();
+            return type.ContainsTrcType(gam);
         }
 
         @Override

@@ -31,6 +31,8 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
     private KindVariable kindVariable = new KindVariable(new HashMap<>());
 
     HashMap<String, ArrayList<Boolean>> kindTupleIndex = new HashMap<>();
+
+    HashMap<String, Signature> FunctionsReturnType = new HashMap<>();
     public MyvisitorBlock(Lifetime globalLifetime) {
         this.globalLifetime = globalLifetime.freshWithin();
     }
@@ -83,6 +85,8 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         int k = Integer.parseInt(value.toString());
         Function f = new Function(nameFunc, params.toArray(new Pair[params.size()]), signals,ret, body, k);
         if(WhenWatch){ f.containsWhenWatch=true; WhenWatch=false;  }
+
+        FunctionsReturnType.put(f.getName(), f.getRet());
         return f; }
 
     @Override public ArrayList<String> visitSignalsFunc(msslParser.SignalsFuncContext ctx) {
@@ -225,6 +229,7 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         /**
          * &w: &mut x or &mut *x
          * case of dereference e.g &mut *x
+         * &mut x.clone, & *x.clone, etc
          */
         return new Syntax.Expression.Borrow(access.operand(), true);
     }
@@ -317,9 +322,17 @@ public class MyvisitorBlock extends msslBaseVisitor<Object> {
         }
         else {
             // let mut x = y...
-            Access access = (Access) e;
-            Lval lval = access.operand();
-            kindVariable.put(var, kindVariable.contains(lval.name()));
+            if(e instanceof Access) {
+                Access access = (Access) e;
+                Lval lval = access.operand();
+                kindVariable.put(var, kindVariable.contains(lval.name()));
+            }
+            /*else{
+                // let mut x = f(x,y);
+                InvokeFunction f = (InvokeFunction) e;
+                Signature ret = FunctionsReturnType.get(f.getName());
+                if(ret instanceof Signature.Box || ret instanceof Signature.Trc || ret instanceof Signature.Clone ||)
+            }*/
         }
 
         return declaration; }

@@ -103,9 +103,12 @@ public class BorrowCheckerFunction extends BorrowChecker{
         BorrowChecker.global=EMPTY_ENVIRONMENT;
         envFunctions.put(function.getName(), envf);
         //(6) Check type compatibility ( in our case we have not a return function)
-        if(!function.getRet().isSubtype(p.first(),p.second(), suitable)){
-            System.out.printf("The type of the function is incompatible with the type of its body!");
-        }
+        //System.out.println("\n the type of the body "+ function.getRet() );
+            try {
+                check(!function.getRet().isSubtype(p.first(),p.second(), suitable), "The type of the function is incompatible with the type of its body!");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
     }
 
 

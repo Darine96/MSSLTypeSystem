@@ -19,6 +19,8 @@ public interface Signature {
      * (2) lifting
      */
     public Type lift(Map<Signature.Borrow, Type.Borrow> lifting);
+
+    public Type liftClone(Map<Signature.Clone, Type.Clone> lifting);
     /**
      * (3) isSubtyping
      */
@@ -68,6 +70,11 @@ public interface Signature {
 
         @Override
         public Type lift(Map<Signature.Borrow, Type.Borrow> lifting) {
+            return Type.Unit;
+        }
+
+        @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
             return Type.Unit;
         }
 
@@ -135,6 +142,11 @@ public interface Signature {
         }
 
         @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
+            return Type.Int;
+        }
+
+        @Override
         public boolean isSubtype(Environment env, Type type, Map<String, Lifetime> suitable) {
 
             return type instanceof Type.Int;
@@ -195,6 +207,11 @@ public interface Signature {
 
         @Override
         public Type lift(Map<Signature.Borrow, Type.Borrow> lifting) {
+            return Type.Bool;
+        }
+
+        @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
             return Type.Bool;
         }
 
@@ -286,6 +303,11 @@ public interface Signature {
         }
 
         @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
+            return new Type.Box(operand.liftClone(lifting));
+        }
+
+        @Override
         public boolean isSubtype(Environment env, Type type, Map<String, Lifetime> suitable) {
             return (type instanceof Type.Box)&& operand.isSubtype(env, ((Type.Box) type).getType(), suitable);
         }
@@ -360,6 +382,11 @@ public interface Signature {
         @Override
         public Type lift(Map<Signature.Borrow, Type.Borrow> lifting) {
             return new Type.Trc(operand.lift(lifting));
+        }
+
+        @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
+            return new Type.Trc(operand.liftClone(lifting));
         }
 
         /* @Override
@@ -447,7 +474,8 @@ public interface Signature {
             //(3) create a fresh lifetime
             String fresh = BorrowChecker.fresh();
             //(4) put into gam
-            Environment gam2 = p.first().put(fresh, p.second(), _l);
+            Type.Trc _t = new Type.Trc(p.second());
+            Environment gam2 = p.first().put(fresh, _t, _l);
             // Done
             return new Pair<>(gam2, new Type.Clone(new Lval(fresh, Path.EMPTY)));
         }
@@ -455,6 +483,7 @@ public interface Signature {
         private Lifetime instantiateTargetLifetime(Lifetime lft) {
            // Target lifetime must be within root
             Lifetime  _l = new Lifetime(lft.getRoot());
+            lft.assertWithin(_l);
             // Done
             return _l;
         }
@@ -464,17 +493,24 @@ public interface Signature {
         }
 
         @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
+            return lifting.get(this);
+        }
+
+        @Override
         public boolean isSubtype(Environment env, Type type, Map<String, Lifetime> suitable) {
             if (type instanceof Type.Clone) {
                 Type.Clone b = (Type.Clone) type;
                 for (Lval lv : b.lvals()) {
                     Pair<Type, Lifetime> p = lv.typeOf(env);
-                    Type T = p.first();
-                    return  operand.isSubtype(env, T, suitable);
+                    // type of w is an active Trc type
+                    Type.Trc T = (Type.Trc) p.first();
+                    return  operand.isSubtype(env, T.type, suitable);
 
                 }
 
                 }
+
             return false;
             }
 
@@ -489,8 +525,8 @@ public interface Signature {
                 Type.Clone b = (Type.Clone) type;
                 for (Lval lv : b.lvals()) {
                     Pair<Type, Lifetime> p = lv.typeOf(env);
-                    Type T = p.first();
-                    return  operand.isSupertype(env, T, suitable);
+                    Type.Trc T = (Type.Trc) p.first();
+                    return  operand.isSupertype(env, T.type, suitable);
 
                 }
 
@@ -568,6 +604,11 @@ public interface Signature {
         }
 
         @Override
+        public Type liftClone(Map<Clone, Type.Clone> lifting) {
+            return null;
+        }
+
+        @Override
         public boolean isSubtype(Environment R, Type type, Map<String, Lifetime> suitable) {
             if (type instanceof Type.Borrow) {
                 Type.Borrow b = (Type.Borrow) type;
@@ -585,6 +626,7 @@ public interface Signature {
                             return false;
                         } else if(mutable && (!l.contains(m) || !signature.isSupertype(R, T, suitable))) {
                             // mutable borrows are invariant.
+                            System.out.println("\n\n into subtypeeeeeeee "+ !signature.isSupertype(R, T, suitable));
                             return false;
                         }
                     }
@@ -614,6 +656,7 @@ public interface Signature {
 
         @Override
         public boolean isSupertype(Environment R, Type type, Map<String, Lifetime> suitable ) {
+
             if (type instanceof Type.Borrow) {
                 Type.Borrow b = (Type.Borrow) type;
                 if (b.isMutable() == mutable) {
@@ -634,6 +677,7 @@ public interface Signature {
                     return true;
                 }
             }
+
             return false;
         }
 
