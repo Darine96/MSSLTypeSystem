@@ -1,0 +1,12 @@
+{
+    let mut x = trc(0);
+    let mut y = trc(1);
+    { let mut a = x.clone;
+    if(&*x == &*y){
+        a = y.clone;
+    }else{
+
+    };
+    let mut b = x;
+    }
+}
