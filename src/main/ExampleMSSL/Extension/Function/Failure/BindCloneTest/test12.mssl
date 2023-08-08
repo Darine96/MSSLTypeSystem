@@ -1,0 +1,11 @@
+fn f1(mut x: box<box<trc<int>>>)->0 clone<int>{
+
+    **x.clone;
+
+}
+
+{
+    let mut x = trc(0);
+    let mut a = trc(0);
+    a  = f1(box(box(x)));
+}
