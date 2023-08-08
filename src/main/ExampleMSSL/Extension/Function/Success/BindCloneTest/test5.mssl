@@ -1,0 +1,12 @@
+fn f1(mut x: trc<int>, mut y: box<&'a box<int>>)->0 trc<int>{
+    x;
+
+}
+
+{
+    let mut x = box(0);
+    //let mut a = box(&x);
+    let mut y = box(trc(0));
+    let mut a = trc(0);
+    a =  f1(*y, box(&x));
+}

@@ -6,5 +6,6 @@ fn f1(mut x: trc<int>, mut y: trc<int>)->0 trc<int>{
 {
     let mut x = trc(0);
     let mut y = trc(0);
-    let mut a = f1(y, x);
+    let mut a = trc(0);
+    a = f1(y, x);
 }
