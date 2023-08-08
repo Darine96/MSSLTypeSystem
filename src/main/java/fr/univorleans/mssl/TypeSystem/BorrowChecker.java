@@ -857,7 +857,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             Type returnType = ReturnType(declaration,gam2,lifetime,args);
             /** Apply side effects ***/
              Environment gam3 = liftSideEffects(declaration, gam2, lifetime, args);
-             System.out.println("\n\n gam3 "+ returnType.toString());
             return new Pair<>(gam3, returnType);
         }
 
@@ -1624,7 +1623,6 @@ protected boolean mut(Environment R, Lval w) {
          */
         if(target.containsClone()) {
             Signature s = target.returnClone();
-            System.out.println("\n\n s "+s.toString());
             holesClone.add((Signature.Clone) s);
             //target.match(Signature.Clone.class, b -> holesClone.add(b));
         }

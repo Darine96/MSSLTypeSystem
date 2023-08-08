@@ -446,8 +446,9 @@ public interface Type {
 
         @Override
         public String free(String name, int i, String free, int pos){
+            //if(free.contains("_destroy") || (free=="" && pos!=0)){
+            if(free.contains("_destroy") ){
 
-            if(free.contains("_destroy") || (free=="" && pos!=0)){
                 if(pos==0 || free=="") {
                     free = "free(" + "*".repeat(i) + "(int " + "*".repeat(i + 1) + ")_get_value(" +name + "));" + free;
                 }else{
@@ -455,9 +456,10 @@ public interface Type {
                 }
             }else{
                 free = "free("+ "*".repeat(i)+name+");"+free;
+
             }
             i++;
-            //System.out.println("\n free "+free+"\n");
+
             return type.free(name, i, free,pos);
         }
 
@@ -691,7 +693,7 @@ public interface Type {
         @Override
         public String free(String name, int i, String free, int pos){
             free = "_destroy("+ "*".repeat(i)+name+");"+free;
-            i++;
+            //i++;
             return free;
         }
 

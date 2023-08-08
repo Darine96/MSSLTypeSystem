@@ -882,11 +882,10 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
              * let mut x = box(*y); etc...
              */
             Type type = l.getType();
-            boolean b = type.ContainsTrcType(env);
+            boolean b = (type.ContainsTrcType(env) || type.ContainsTrc(env));
             int c = type.refcount(env);
             if(b){
                 c = type.positionTrc(env);}
-
             //if(check_box){ c = c- CharMatcher.is('*').countIn(current_fresh);}
             _create_box(c, b, counter, expression.getVariable().toString());
 
@@ -1061,9 +1060,11 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         Lval v = expression.operand();
         Pair<Type,Lifetime> typing_omega = v.typeOf(env);
         String lval = expression.operand().toString();
+        String s = lval;
         if(lasteexpression) {
             if(lval.contains("*")){
                     // is a dereference into box
+                s= "_i";
                     if(typing_omega.first() instanceof Type.Trc || typing_omega.first() instanceof Type.Clone){
                         int ref = typing_omega.first().positionTrc(env);
                         try {
@@ -1095,7 +1096,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             drop(blockvariables);
             try {
                 PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-                writer.print("\treturn _i");
+                writer.print("\treturn "+s);
                 writer.close();
             }
             catch (IOException e){
@@ -1512,50 +1513,65 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             }else if(e instanceof Syntax.Expression.Trc || e instanceof  Syntax.Expression.Clone){
                 //f(trc(0));
                 String _var = "_"+incFresh();
-                if ((((Syntax.Expression.Trc) e).getOperand() instanceof Value.Integer)) {
-                    apply(e);
+                if(e instanceof Expression.Trc) {
+                    if ((((Syntax.Expression.Trc) e).getOperand() instanceof Value.Integer)) {
+                        apply(e);
 
-                    try {
-                        PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-                        writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
-                        writer.print(";\n");
-                        writer.close();
-                    } catch (IOException ie) {
-                        System.out.println("An error occurred.");
-                        ie.printStackTrace();
-                    }
+                        try {
+                            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                            writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
+                            writer.print(";\n");
+                            writer.close();
+                        } catch (IOException ie) {
+                            System.out.println("An error occurred.");
+                            ie.printStackTrace();
+                        }
 
-                }else if((((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Access) || (((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Borrow)) {
-                    apply(e);
-                    try {
-                        PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-                        writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
-                        writer.print(";\n");
-                        writer.close();
-                    } catch (IOException ie) {
-                        System.out.println("An error occurred.");
-                        ie.printStackTrace();
-                    }
-                }else if(((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Box){
-                // create a fresh box then bind it to a trc
-                    Value.Integer counter = (Value.Integer) apply(((Syntax.Expression.Trc) e).getOperand());
-                    int _count = signatures[i].second().refcountBorrow();
-                    Boolean containsTrc = (signatures[i].second().containsTrc() && signatures[i].second().containsTrcBorrow());
+                    } else if ((((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Access) || (((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Borrow)) {
+                        apply(e);
+                        try {
+                            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                            writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
+                            writer.print(";\n");
+                            writer.close();
+                        } catch (IOException ie) {
+                            System.out.println("An error occurred.");
+                            ie.printStackTrace();
+                        }
+                    } else if (((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Box) {
+                        // create a fresh box then bind it to a trc
+                        Value.Integer counter = (Value.Integer) apply(((Syntax.Expression.Trc) e).getOperand());
+                        int _count = signatures[i].second().refcountBorrow();
+                        Boolean containsTrc = (signatures[i].second().containsTrc() && signatures[i].second().containsTrcBorrow());
                    /* if(containsTrc){
                         _count = signatures[i].second().posTrc();
                     }*/
-                    String fresh = "_"+incFresh();
-                    _create_box(_count,false, counter, fresh);
+                        String fresh = "_" + incFresh();
+                        _create_box(_count, false, counter, fresh);
+                        try {
+                            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                            writer.print(";\n");
+                            writer.print("\tTrc " + _var + "= _create_trc (&" + fresh + ");\n");
+                            writer.close();
+                        } catch (IOException ie) {
+                            System.out.println("An error occurred.");
+                            ie.printStackTrace();
+                        }
+                    }
+                }else{
+                    Lval lval = ((Expression.Clone) e).getOperand();
                     try {
                         PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
                         writer.print(";\n");
-                        writer.print("\tTrc " + _var + "= _create_trc (&" + fresh + ");\n");
+                        writer.print("\tTrc " + _var + "=  _clone_trc (" + lval.name().toString() + ");\n");
                         writer.close();
                     } catch (IOException ie) {
                         System.out.println("An error occurred.");
                         ie.printStackTrace();
                     }
-            }
+
+
+                }
             args[i]=_var;
             }
         }
