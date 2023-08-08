@@ -1,14 +1,14 @@
-fn f1(mut x: trc<int>)->0 box<clone<int>>{
+fn f1(mut x: clone<int>)->0 box<clone<int>>{
 
-  box(x.clone);
-
+  let mut v = box(x);
+    v;
+    //box(x);
 }
 
 {
     let mut x = trc(0);
     let mut y = trc(0);
     let mut a = box(trc(0));
-    a = f1(x);
-    //a = f1(x, box(box(trc(0))));
+    a = f1(x.clone);
 
 }
