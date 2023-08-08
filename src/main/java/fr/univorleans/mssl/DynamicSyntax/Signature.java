@@ -50,12 +50,16 @@ public interface Signature {
      */
     public boolean containsTrc();
 
+    public boolean containsClone();
+
     public boolean containsTrcBorrow();
 
     /**
      * (6) position of a trc in the signature
      */
     public int posTrc();
+
+    public Signature returnClone();
     public static class Unit implements Signature{
         @Override
         public String toString() {
@@ -98,6 +102,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return false;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return false;
         }
@@ -105,6 +114,11 @@ public interface Signature {
         @Override
         public int posTrc() {
             return 0;
+        }
+
+        @Override
+        public Signature returnClone() {
+            return null;
         }
 
         @Override
@@ -191,6 +205,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return false;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return false;
         }
@@ -198,6 +217,11 @@ public interface Signature {
         @Override
         public int posTrc() {
             return 0;
+        }
+
+        @Override
+        public Signature returnClone() {
+            return null;
         }
 
         @SuppressWarnings("unchecked")
@@ -270,6 +294,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return false;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return false;
         }
@@ -277,6 +306,11 @@ public interface Signature {
         @Override
         public int posTrc() {
             return 0;
+        }
+
+        @Override
+        public Signature returnClone() {
+            return null;
         }
 
         @SuppressWarnings("unchecked")
@@ -327,6 +361,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return operand.containsTrc();
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return operand.containsTrcBorrow();
         }
@@ -334,6 +373,11 @@ public interface Signature {
         @Override
         public int posTrc() {
             return 1+operand.posTrc();
+        }
+
+        @Override
+        public Signature returnClone() {
+            return operand.returnClone();
         }
 
         @Override
@@ -411,6 +455,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return false;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return true;
         }
@@ -419,6 +468,12 @@ public interface Signature {
         public int posTrc() {
             return 1;
         }
+
+        @Override
+        public Signature returnClone() {
+            return null;
+        }
+
         @Override
         public boolean equals(Object o) {
             if(o instanceof Trc) {
@@ -518,6 +573,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return true;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return true;
         }
@@ -526,6 +586,12 @@ public interface Signature {
         public int posTrc() {
             return 1;
         }
+
+        @Override
+        public Signature returnClone() {
+            return this;
+        }
+
         @Override
         public Pair<Environment, Type> lower(Environment gam, HashMap<String, Lifetime> suitable, Lifetime l) {
             //(1) ensure that l outlives the lifetime of this borrow
@@ -763,6 +829,11 @@ public interface Signature {
         }
 
         @Override
+        public boolean containsClone() {
+            return false;
+        }
+
+        @Override
         public boolean containsTrcBorrow() {
             return signature.containsTrcBorrow();
         }
@@ -774,6 +845,11 @@ public interface Signature {
         @Override
         public int posTrc() {
             return 1+signature.posTrc();
+        }
+
+        @Override
+        public Signature returnClone() {
+            return null;
         }
 
         @Override

@@ -857,6 +857,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             Type returnType = ReturnType(declaration,gam2,lifetime,args);
             /** Apply side effects ***/
              Environment gam3 = liftSideEffects(declaration, gam2, lifetime, args);
+             System.out.println("\n\n gam3 "+ returnType.toString());
             return new Pair<>(gam3, returnType);
         }
 
@@ -1610,6 +1611,7 @@ protected boolean mut(Environment R, Lval w) {
         Map<String, Lifetime> binding = construct(l, params);
         ArrayList<Signature.Borrow> holes = new ArrayList<>();
         ArrayList<Signature.Clone> holesClone = new ArrayList<>();
+        ArrayList<Signature> holesCloneTest = new ArrayList<>();
         // Identify borrows which need to be lifted
         // this case juts for borrow
         target.match(Signature.Borrow.class, b -> holes.add(b));
@@ -1617,8 +1619,18 @@ protected boolean mut(Environment R, Lval w) {
         // this case juts for clone
         // fn f1()-> clone<int>
         // à faire f1() -> box<clone>
-        target.match(Signature.Clone.class, b -> holesClone.add(b));
+        /**
+         * signature: clone, box<clone>, etc
+         */
+        if(target.containsClone()) {
+            Signature s = target.returnClone();
+            System.out.println("\n\n s "+s.toString());
+            holesClone.add((Signature.Clone) s);
+            //target.match(Signature.Clone.class, b -> holesClone.add(b));
+        }
+
         HashMap<Signature.Clone, Type.Clone> lifting2 = new HashMap<>();
+
         for (Signature.Clone hole : holesClone) {
             for (int j = 0; j != args.length; ++j) {
                 liftClone(params[j].second(), R, args[j], hole, binding, lifting2);
@@ -1633,9 +1645,15 @@ protected boolean mut(Environment R, Lval w) {
             }
         }
         //
-        if(lifting2.isEmpty()) {
+        if(lifting2.isEmpty() && (!holesClone.isEmpty())) {
+            try {
+                check((lifting.isEmpty() && holes.isEmpty()), "Incompatible Return Type.");
+            } catch (ExceptionsMSG e) {
+                throw new RuntimeException(e);
+            }
             return target.lift(lifting);
         }else {
+
             return target.liftClone(lifting2);
         }
     }
