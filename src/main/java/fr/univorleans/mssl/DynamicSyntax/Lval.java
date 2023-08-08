@@ -26,7 +26,6 @@ public class Lval implements Comparable<Lval>, Syntax.Expression {
     }
 
     public boolean conflicts(Lval lv) {
-        System.out.printf("conflicts");
         return name.equals(lv.name) && path.conflicts(lv.path);
     }
 

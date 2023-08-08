@@ -43,10 +43,14 @@ public interface Signature {
      */
     public int refcount();
 
+    public int refcountBorrow();
+
     /**
      * (5) contains a Trc
      */
     public boolean containsTrc();
+
+    public boolean containsTrcBorrow();
 
     /**
      * (6) position of a trc in the signature
@@ -84,7 +88,17 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 0;
+        }
+
+        @Override
         public boolean containsTrc() {
+            return false;
+        }
+
+        @Override
+        public boolean containsTrcBorrow() {
             return false;
         }
 
@@ -167,7 +181,17 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 0;
+        }
+
+        @Override
         public boolean containsTrc() {
+            return false;
+        }
+
+        @Override
+        public boolean containsTrcBorrow() {
             return false;
         }
 
@@ -236,7 +260,17 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 0;
+        }
+
+        @Override
         public boolean containsTrc() {
+            return false;
+        }
+
+        @Override
+        public boolean containsTrcBorrow() {
             return false;
         }
 
@@ -283,9 +317,20 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 1+operand.refcountBorrow();
+        }
+
+        @Override
         public boolean containsTrc() {
             return operand.containsTrc();
         }
+
+        @Override
+        public boolean containsTrcBorrow() {
+            return operand.containsTrcBorrow();
+        }
+
         @Override
         public int posTrc() {
             return 1+operand.posTrc();
@@ -356,7 +401,17 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 1+operand.refcountBorrow();
+        }
+
+        @Override
         public boolean containsTrc() {
+            return true;
+        }
+
+        @Override
+        public boolean containsTrcBorrow() {
             return true;
         }
 
@@ -453,7 +508,17 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 1+operand.refcountBorrow();
+        }
+
+        @Override
         public boolean containsTrc() {
+            return true;
+        }
+
+        @Override
+        public boolean containsTrcBorrow() {
             return true;
         }
 
@@ -628,7 +693,6 @@ public interface Signature {
                         }else if(mutable && (!signature.isSupertype(R, T, suitable))) {
                         //else if(mutable && (!l.contains(m) || !signature.isSupertype(R, T, suitable))) {
                             // mutable borrows are invariant.
-                            System.out.println("\n\n into subtypeeeeeeee "+ l.contains(m));
                             return false;
                         }
                     }
@@ -689,13 +753,27 @@ public interface Signature {
         }
 
         @Override
+        public int refcountBorrow() {
+            return 1+signature.refcountBorrow();
+        }
+
+        @Override
         public boolean containsTrc() {
             return false;
         }
 
         @Override
+        public boolean containsTrcBorrow() {
+            return signature.containsTrcBorrow();
+        }
+
+        /*@Override
         public int posTrc() {
             return 0;
+        }*/
+        @Override
+        public int posTrc() {
+            return 1+signature.posTrc();
         }
 
         @Override

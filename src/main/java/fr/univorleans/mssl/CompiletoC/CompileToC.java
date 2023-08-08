@@ -46,6 +46,9 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     private Lifetime lftMain = null;
 
     private int fresh =0;
+
+    public boolean lasteexpression = false;
+    public HashMap<String, Type> blockvariables = new HashMap<>();
     private int nodeNumbers =0;
     private final List<Function> functions;
 
@@ -99,6 +102,46 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         }
     }
 
+    public String returnSig(Signature signature){
+        String type = null;
+        if (signature instanceof Signature.Int){
+            type="int ";
+        }else  if (signature instanceof Signature.Bool){
+            type="bool ";
+        } else if (signature instanceof Signature.Box || signature instanceof Signature.Borrow) {
+            Signature sig;
+            if(signature instanceof Signature.Box){
+               sig = ((Signature.Box) signature).getOperand();
+            }else {
+                sig = ((Signature.Borrow) signature).getSignature();
+            }
+            /**
+             * Sig: box<int> or box<box<int>>
+             * compute how much of ref contain this reference
+             */
+            /**
+             * Sig: box<trc<int>> or box<box<trc<int>>>
+             * verify if this signature contain a trc sig
+             *
+             */
+            //int refcount = sig.refcount();
+            /** the number of references
+             *  box<&'a int>, box< clone int>, etc
+             * **/
+            int refcount = signature.refcountBorrow();
+            boolean containsTrc = (sig.containsTrcBorrow());
+            if(containsTrc){
+                int posTrc = signature.posTrc();
+                type = "Trc "+"*".repeat(posTrc-1);
+            }else {
+                type = "int "+"*".repeat(refcount);
+            }
+        }else if(signature instanceof Signature.Trc || signature instanceof Signature.Clone){
+            type = "Trc ";
+        }
+        return type;
+    }
+
     /******************* engine to apply *****************************/
 
     public final Expression execute(Expression expression) {
@@ -129,42 +172,28 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         for (int i = 0; i != functions.size(); ++i) {
             check_function=true;
             env=envFunctions.get(functions.get(i).getName());
+            Signature ret = functions.get(i).getRet();
             try{
                 PrintWriter writer = new PrintWriter(new FileWriter(filename,true));
-                writer.println("\nvoid "+functions.get(i).getName()+"(void* args){\t");
+                if(ret instanceof Signature.Unit) {
+                    writer.println("\nvoid " + functions.get(i).getName() + "(void* args){\t");
+                }else{
+                    String retType = returnSig(ret);
+                    writer.print("\n"+retType+" "+ functions.get(i).getName() + "(");
+                }
                 int counter = functions.get(i).getParams().length;
                 for (int j=0; j!=functions.get(i).getParams().length;++j){
                     Pair<String, Signature> jth = functions.get(i).getParams()[j];
-                    String type=null;
-                    if (jth.second() instanceof Signature.Int){
-                        type="int ";
-                    }else  if (jth.second() instanceof Signature.Bool){
-                        type="bool ";
-                    } else if (jth.second() instanceof Signature.Box) {
-                        Signature sig = ((Signature.Box) jth.second()).getOperand();
-                        /**
-                         * Sig: box<int> or box<box<int>>
-                         * compute how much of ref contain this reference
-                         */
-                        /**
-                         * Sig: box<trc<int>> or box<box<trc<int>>>
-                         * verify if this signature contain a trc sig
-                         *
-                         * Note that in this implementation we have not a signature wih reference
-                         */
-                         //int refcount = sig.refcount();
-                         int refcount = jth.second().refcount();
-                         boolean containsTrc = sig.containsTrc();
-                        if(containsTrc){
-                            int posTrc = jth.second().posTrc();
-                            type = "Trc "+"*".repeat(posTrc-1);
+                    String type= returnSig(jth.second());
+                    if(ret instanceof Signature.Unit) {
+                        writer.println("\t" + type + jth.first() + " = (" + type + ") get_value(args," + j + ");\t");
+                    }else {
+                        if((j == functions.get(i).getParams().length-1) && (functions.get(i).getSignals().length ==0)) {
+                            writer.println(type + jth.first() +"){");
                         }else {
-                            type = "int "+"*".repeat(refcount);
+                            writer.print(type + jth.first() + ", ");
                         }
-                    }else if(jth.second() instanceof Signature.Trc){
-                        type = "Trc ";
                     }
-                    writer.println("\t"+type+jth.first()+" = ("+type+") get_value(args,"+j+");\t");
                    /* if(type.contains("*")){
                         writer.println("\t"+type+jth.first()+" = ("+type.substring(0, jth.second().toString().indexOf("*"))+") get_value(args,"+j+");\t");
                     }else{
@@ -180,7 +209,15 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 for (int j=0; j!=functions.get(i).getSignals().length;++j){
                     String jth = functions.get(i).getSignals()[j];
                     String type="ft_event_t ";
-                    writer.println("\t"+type+jth+" = ("+type+") get_value(args,"+counter+");\t");
+                    if(ret instanceof Signature.Unit) {
+                        writer.println("\t" + type + jth + " = (" + type + ") get_value(args," + counter + ");\t");
+                    }else{
+                        if(j == functions.get(i).getSignals().length-1){
+                            writer.print(type+ jth+"){");
+                        }else {
+                            writer.print(type+ jth+", ");
+                        }
+                    }
                     counter+=1;
 
                 }
@@ -248,7 +285,6 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         Type type = _l.getType().returnType(env, count);
         boolean containsTrc = _l.getType().ContainsTrc(env);
       //  Pair<Type,Lifetime> p = lval.typeOf(env);
-       // System.out.println("\n type of omega is "+type);
         //boolean containsTrc = type.ContainsTrc(env);
         /**
          * x = 0; or *x= 0; etc...
@@ -285,7 +321,6 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
          */
         if(_l.getType() instanceof Type.Clone){ type = _l.getType();}
         String free = type.free(lval.name(),count,"", _l.getType().positionTrc(env));
-        //System.out.println("\n lval name for free "+_l.getType().positionTrc(env));
         /**
          * put free into the file.c
          */
@@ -399,7 +434,6 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 }
             }
         }else if(expression.getExpr() instanceof Syntax.Expression.Clone){
-            //System.out.printf("hellooooo");
             //(1) free(this clone)
 
             //(2) realloue
@@ -412,6 +446,31 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 System.out.println("An error occurred.");
                 ie.printStackTrace();
             }
+        }else if(expression.getExpr() instanceof InvokeFunction){
+            String name = ((InvokeFunction) expression.getExpr()).getName();
+            int function = 0;
+            for (int k = 0; k!= functions.size();++k){
+                if(functions.get(k).getName() == name){
+                    function = k;
+                }
+            }
+            Signature ret = functions.get(function).getRet();
+            Pair<String, Signature>[] signatures = functions.get(function).getParams();
+            String retType = returnSig(ret);
+            try {
+                PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                writer.print("\t"+lval.name()+ " = "+name+"(" );
+                String[] args = argumentsInvokefunction(((InvokeFunction) expression.getExpr()).getArguments(),signatures);
+                for (int i = 0;i!=args.length -1;++i){
+                    writer.print(args[i]+", " );
+                }
+                writer.print(args[args.length -1]+")" );
+                writer.close();
+            } catch (IOException ie) {
+                System.out.println("An error occurred.");
+                ie.printStackTrace();
+            }
+            //apply(expression.getExpr());
         }
         return null;
     }
@@ -437,9 +496,14 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             }
         }
         check_function=false;
-        //System.out.printf("\n length "+n);
         for(int i = 0; i!= n;++i){
+            if(i == n-1){
+                // needed to write return
+                blockvariables= expression.variablesType();
+                lasteexpression = true;
+            }
             e = apply(expression.getExprs()[i]);
+
             try {
                 PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
                 writer.println(";");
@@ -455,8 +519,11 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 /**
                  * free at the end of each block
                  */
-                // System.out.println("\n length of the variable is "+expression.variablesType().size());
-                drop(expression.variablesType());
+                if(lasteexpression){
+                    lasteexpression = false;
+                }else {
+                    drop(expression.variablesType());
+                }
                 writer.print("\n}");
             }
             else{ if(CopyNBthreads>0) {
@@ -477,15 +544,17 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 }
 
                 /** (2) free variables **/
-                for(Map.Entry mapentry: expression.variablesType().entrySet()){
-                    String name = (String) mapentry.getKey();
-                    Type type = (Type) mapentry.getValue();
-                    String free = type.free(name,0,"", 0);
-                    /**
-                     * put free into the file.c
-                     */
-                        writer.println("\t"+free);
-                }
+
+
+                    for (Map.Entry mapentry : expression.variablesType().entrySet()) {
+                        String name = (String) mapentry.getKey();
+                        Type type = (Type) mapentry.getValue();
+                        String free = type.free(name, 0, "", 0);
+                        /**
+                         * put free into the file.c
+                         */
+                        writer.println("\t" + free);
+                    }
 
                 writer.println("\treturn 0;");
                 writer.print("}");
@@ -708,6 +777,8 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         Syntax.Expression[] arguments = expression.getArguments();
         String[] signals = expression.getSignals();
             // (0.1) create a fresh variable is necessary
+        // check if the function inside spawn
+        if(expression.getCheck()) {
             String[] args = fresh_argments(name, arguments);
             //(1) create a struct
            // String node = "__" + name;
@@ -735,20 +806,43 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 }
             }
 
-        //(3)create a thread by decrement the nombre and bind it to the scheduler
-        String th = "_th"+NBthreads;
-        setNBthreads();
-        try {
-            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            if(arguments.length!=0 || signals.length!=0) {
-                writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL," + node + ")");
-            }else{
-                writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL,NULL)");
+            //(3)create a thread by decrement the nombre and bind it to the scheduler
+            String th = "_th" + NBthreads;
+            setNBthreads();
+            try {
+                PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                if (arguments.length != 0 || signals.length != 0) {
+                    writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL," + node + ")");
+                } else {
+                    writer.print("\t" + th + " = ft_thread_create(sched," + name + ",NULL,NULL)");
+                }
+                writer.close();
+            } catch (IOException ie) {
+                System.out.println("An error occurred.");
+                ie.printStackTrace();
             }
-            writer.close();
-        } catch (IOException ie) {
-            System.out.println("An error occurred.");
-            ie.printStackTrace();
+        }else{
+            int function = 0;
+            for (int k = 0; k!= functions.size();++k){
+                if(functions.get(k).getName() == name){
+                    function = k;
+                }
+            }
+            Pair<String, Signature>[] signatures = functions.get(function).getParams();
+            try {
+                PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                writer.print("\t"+name+"(");
+                String[] args = argumentsInvokefunction(((expression).getArguments()),signatures);
+                for (int i = 0;i!=args.length -1;++i){
+                    writer.print(args[i]+", " );
+                }
+                writer.print(args[args.length -1]+")" );
+                writer.close();
+            } catch (IOException ie) {
+                System.out.println("An error occurred.");
+                ie.printStackTrace();
+            }
+
         }
         return null;
     }
@@ -788,9 +882,10 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
              * let mut x = box(*y); etc...
              */
             Type type = l.getType();
-            boolean b = type.ContainsTrc(env);
+            boolean b = type.ContainsTrcType(env);
             int c = type.refcount(env);
-            if(b){ c = type.positionTrc(env);}
+            if(b){
+                c = type.positionTrc(env);}
 
             //if(check_box){ c = c- CharMatcher.is('*').countIn(current_fresh);}
             _create_box(c, b, counter, expression.getVariable().toString());
@@ -810,7 +905,6 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
 
             }else if((((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Access) || (((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Borrow)){
                 apply(e);
-                //System.out.printf("\n\n current_fresh "+current_fresh);
                 try {
                     PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
                     writer.print("\tTrc " + expression.getVariable() + "= _create_trc (" + getCurrent_fresh() + ")");
@@ -857,7 +951,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             String deref = "*".repeat(lval.path().size())+lval.name();
             try {
                 PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            if(_l.getType().ContainsTrc(env)){
+            if(_l.getType().ContainsTrcType(env)){
                 // if the type contient un trc
                 // then, if this lval is a dereference; make sure that if we travers a trc
                 // compute the position of the trc
@@ -902,7 +996,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             }
             try {
                 PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-                if(_l.getType().returnType(env,_deref).ContainsTrc(env)){
+                if(_l.getType().returnType(env,_deref).ContainsTrcType(env)){
                     count = _l.getType().returnType(env,_deref).positionTrc(env)-1;
                     writer.print("\t Trc" + "*".repeat(count) + " " + expression.getVariable() + "=" + deref);
                 }else {
@@ -917,6 +1011,31 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 System.out.println("An error occurred.");
                 ie.printStackTrace();
             }
+        }else if(e instanceof InvokeFunction){
+            String name = ((InvokeFunction) e).getName();
+            int function = 0;
+            for (int k = 0; k!= functions.size();++k){
+                if(functions.get(k).getName() == name){
+                    function = k;
+                }
+            }
+            Signature ret = functions.get(function).getRet();
+            String retType = returnSig(ret);
+            Pair<String, Signature>[] signatures = functions.get(function).getParams();
+                try {
+                    PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                    writer.print("\t" + retType+ " "+expression.getVariable()+"  = "+name+"(" );
+                    String[] args = argumentsInvokefunction(((InvokeFunction) expression.getInitialiser()).getArguments(),signatures);
+                    for (int i = 0;i!=args.length -1;++i){
+                        writer.print(args[i]+", " );
+                    }
+                    writer.print(args[args.length -1]+")" );
+                    writer.close();
+                } catch (IOException ie) {
+                    System.out.println("An error occurred.");
+                    ie.printStackTrace();
+                }
+
         }
 
         return null;
@@ -939,6 +1058,63 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     }
     @Override
     protected Syntax.Expression apply(Syntax.Expression.Access expression) {
+        Lval v = expression.operand();
+        Pair<Type,Lifetime> typing_omega = v.typeOf(env);
+        String lval = expression.operand().toString();
+        if(lasteexpression) {
+            if(lval.contains("*")){
+                    // is a dereference into box
+                    if(typing_omega.first() instanceof Type.Trc || typing_omega.first() instanceof Type.Clone){
+                        int ref = typing_omega.first().positionTrc(env);
+                        try {
+                            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                            writer.println("\t Trc" + "*".repeat(ref-1) + " _i = " + lval + ";");
+                            writer.close();
+                        }
+                              catch (IOException e){
+                                System.out.println("An error occurred.");
+                                e.printStackTrace();
+                            }
+
+                        }else {
+                    int ref = typing_omega.first().refcount(env);
+                        try {
+                            PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                            writer.println("\t int"+ "*".repeat(ref)+" _i = "+lval+";");
+                            writer.close();
+                        }
+                        catch (IOException e){
+                            System.out.println("An error occurred.");
+                            e.printStackTrace();
+                        }
+
+                   }
+            }
+
+
+            drop(blockvariables);
+            try {
+                PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                writer.print("\treturn _i");
+                writer.close();
+            }
+            catch (IOException e){
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+
+        }else{
+            try {
+                PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                writer.print("\t"+lval);
+                writer.close();
+            }
+            catch (IOException e){
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+
+        }
         return null;
     }
 
@@ -1095,7 +1271,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         Type type = _l.getType();
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            if(type.ContainsTrc(env)){
+            if(type.ContainsTrcType(env)){
                 int pos = type.positionTrc(env)-1;
                 writer.print("printf(\""+lval.name()+" = %i\","+"*".repeat(counter-pos)+"((int"+
                         "*".repeat(counter-pos)+")_get_value("+"*".repeat(pos)+name+")))");
@@ -1173,9 +1349,8 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             else if(check_box) {
                 try {
                     PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-                    //writer.println("\tint " + "*".repeat(count) + " " + var + " = malloc(sizeof(int" + "*".repeat(count - 1) + "));");
-                    writer.println("\tint " + "*".repeat(counter.getCounter()) + " " + var + " = (int " + "*".repeat(counter.getCounter()) + ") malloc(sizeof(int" + "*".repeat(counter.getCounter() - 1) + "));");
-
+                    //writer.println("\tint " + "*".repeat(counter.getCounter()) + " " + var + " = (int " + "*".repeat(counter.getCounter()) + ") malloc(sizeof(int" + "*".repeat(counter.getCounter() - 1) + "));");
+                    writer.println("\tint " + "*".repeat(count) + " " + var + " = (int " + "*".repeat(count) + ") malloc(sizeof(int" + "*".repeat(count - 1) + "));");
                     int _n = counter.getCounter() - 1;
                     int n = count - 1;
                     int j = 1;
@@ -1304,7 +1479,88 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
 
         return args;
     }
+    /***************************************************************/
+    public String[] argumentsInvokefunction(Expression[] arguments, Pair<String, Signature>[] signatures){
+        String[] args=new String[arguments.length];
+        for(int i =0; i!= arguments.length;++i){
+            Expression e = arguments[i];
+            if(e instanceof Value.Integer || e instanceof Value.Boolean || e instanceof Syntax.Expression.Borrow || e instanceof Syntax.Expression.Access){
+                String arg = e.toString();
+                if(arg.contains("mut")) {arg=arg.replace("mut", "");}
+                args[i]=arg;
+            }else if(e instanceof Syntax.Expression.Box ){
+                //(1) free the content of lval
 
+                //(2) realloc a new fresh then assign it to the variable
+                Value.Integer counter = (Value.Integer) apply(e);
+                String _var ="_"+incFresh();
+                int _count = signatures[i].second().refcountBorrow();
+                Boolean containsTrc = (signatures[i].second().containsTrc() && signatures[i].second().containsTrcBorrow());
+                if(containsTrc){
+                    _count = signatures[i].second().posTrc();
+                }
+                        _create_box(_count,containsTrc, counter, _var);
+                try {
+                    PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                    writer.print(";\n");
+                    writer.close();
+                } catch (IOException ie) {
+                    System.out.println("An error occurred.");
+                    ie.printStackTrace();
+                }
+                args[i]=_var;
+            }else if(e instanceof Syntax.Expression.Trc || e instanceof  Syntax.Expression.Clone){
+                //f(trc(0));
+                String _var = "_"+incFresh();
+                if ((((Syntax.Expression.Trc) e).getOperand() instanceof Value.Integer)) {
+                    apply(e);
+
+                    try {
+                        PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                        writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
+                        writer.print(";\n");
+                        writer.close();
+                    } catch (IOException ie) {
+                        System.out.println("An error occurred.");
+                        ie.printStackTrace();
+                    }
+
+                }else if((((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Access) || (((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Borrow)) {
+                    apply(e);
+                    try {
+                        PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                        writer.print("\tTrc " + _var + "= _create_trc (" + getCurrent_fresh() + ")");
+                        writer.print(";\n");
+                        writer.close();
+                    } catch (IOException ie) {
+                        System.out.println("An error occurred.");
+                        ie.printStackTrace();
+                    }
+                }else if(((Syntax.Expression.Trc) e).getOperand() instanceof Syntax.Expression.Box){
+                // create a fresh box then bind it to a trc
+                    Value.Integer counter = (Value.Integer) apply(((Syntax.Expression.Trc) e).getOperand());
+                    int _count = signatures[i].second().refcountBorrow();
+                    Boolean containsTrc = (signatures[i].second().containsTrc() && signatures[i].second().containsTrcBorrow());
+                   /* if(containsTrc){
+                        _count = signatures[i].second().posTrc();
+                    }*/
+                    String fresh = "_"+incFresh();
+                    _create_box(_count,false, counter, fresh);
+                    try {
+                        PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
+                        writer.print(";\n");
+                        writer.print("\tTrc " + _var + "= _create_trc (&" + fresh + ");\n");
+                        writer.close();
+                    } catch (IOException ie) {
+                        System.out.println("An error occurred.");
+                        ie.printStackTrace();
+                    }
+            }
+            args[i]=_var;
+            }
+        }
+        return args;
+    }
     /***************************************************************/
     public abstract static class ExtensionToC implements ToCRules.ExtensionToC {
         protected CompileToC self;

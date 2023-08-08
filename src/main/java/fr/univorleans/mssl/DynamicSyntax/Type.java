@@ -530,7 +530,6 @@ public interface Type {
         public String free(String name, int i, String free, int pos){
             free = "_destroy("+ "*".repeat(i)+name+");"+free;
             i++;
-            //System.out.println("\n free "+free+"\n");
             return type.free(name, i, free, i-1);
         }
 
@@ -604,7 +603,6 @@ public interface Type {
         public boolean within(BorrowChecker checker, Environment gam, Lifetime l) {
 
             boolean r = true;
-            //System.out.printf(" gam2 within "+gam.toString()+"\n");
             for (int i = 0; i != lvals.length; ++i) {
                 Lval ith = lvals[i];
                 if(gam.get(ith.name()) == null){
@@ -694,7 +692,6 @@ public interface Type {
         public String free(String name, int i, String free, int pos){
             free = "_destroy("+ "*".repeat(i)+name+");"+free;
             i++;
-            //System.out.println("\n free "+free+"\n");
             return free;
         }
 
@@ -873,7 +870,6 @@ public interface Type {
         }
 
         public int positionTrc(Environment gam){
-            //System.out.printf("heloooooooooooooo");
             Lval lval =lvals[0];//is enough to test one lval
             String x = lval.name();
             Location location = gam.get(x);
@@ -996,7 +992,6 @@ public interface Type {
         @Override
         public boolean within(BorrowChecker checker, Environment gam, Lifetime l) {
             boolean r = true;
-            //System.out.printf(" gam2 within "+gam.toString()+"\n");
             for (int i = 0; i != lvals.length; ++i) {
                 Lval ith = lvals[i];
                 if(gam.get(ith.name()) == null){

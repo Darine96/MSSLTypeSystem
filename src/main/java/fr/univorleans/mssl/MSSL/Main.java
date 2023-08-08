@@ -53,7 +53,7 @@ public class Main {
                  * recuperer le nom du fichier
                  */
                 int index = fileName.lastIndexOf("/");
-                source = "src/main/MSSLtoC/MSSLToCWithThreads/"+fileName.substring(fileName.lastIndexOf("/")+1, fileName.indexOf('.'))+".c";
+                source = "src/main/MSSLtoC/MSSLToCWithoutThreads/"+fileName.substring(fileName.lastIndexOf("/")+1, fileName.indexOf('.'))+".c";
               //  System.out.printf("\n ------------ "+source+" ----------------------\n");
                 CharStream cs = fromFileName(fileName);
                 /************** Parser and Lexer ************************/
@@ -86,9 +86,9 @@ public class Main {
 
                 /*****************************************************************/
                 /**************** Compiler To C to execute in fairthreads ********/
-             /*   CompileToC compileToC = new CompileToC(visitor.declarations, typingFunction.getEnvFunctions(), typing.getGlobal(), getNBthreads() );
+                CompileToC compileToC = new CompileToC(typingFunction.getFunctions(), typingFunction.getEnvFunctions(), typing.getGlobal(), getNBthreads() );
                 CompileToC.debut_code();
-                compileToC.execute(block);*/
+                compileToC.execute(block);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

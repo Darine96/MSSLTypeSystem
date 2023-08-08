@@ -81,6 +81,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
     }
 
 
+
     /**
      * T-Const
      * @param state
@@ -522,7 +523,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
                 throw new RuntimeException(e);
             }
         }
-        System.out.println("\n\n hello \n\n");
         // safeTrc
         if(k == 1) {
             try {
@@ -621,7 +621,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         //join the environment
         Environment gam4 = join(gam2, gam3, expression, k);
 
-        System.out.println("\n\n gam2 "+gam4.toString());
         //join the type
         return new Pair<>(gam4, _t1.union(_t2));
     }
@@ -692,7 +691,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
         }
-        System.out.println("\n clone "+omega.name());
         //Done
         return new Pair<>(gam, new Type.Clone(omega));
     }
@@ -747,7 +745,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             }
             }
         //NBthreads+=1;
-        Main.setNBthreads();
         //compare the arguments given by the parameters of the function
         Pair<String, Signature>[] parameters = declaration.getParams();
         Syntax.Expression[] arguments = expression.getArguments();
@@ -781,6 +778,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         //premise (3.1): we have already sure that each lval is well typed in gam2
         /** into the spawn **/
         if(check) {
+            Main.setNBthreads();
             //premise (3.2): verify if there exists two inactive trc pointing to the same memory location
             try {
                 check(!invariantTrcSpawn(args, gam2), "Having two inactive Trcs pointing to the same memory location!");
@@ -859,7 +857,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
             Type returnType = ReturnType(declaration,gam2,lifetime,args);
             /** Apply side effects ***/
              Environment gam3 = liftSideEffects(declaration, gam2, lifetime, args);
-             System.out.println("\n\n gam3 liftSideEffects "+gam3.toString());
             return new Pair<>(gam3, returnType);
         }
 
@@ -932,7 +929,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
      */
     protected boolean writeProhibited(Environment R, Lval lv) {
         // Check whether any type prohibits this being written
-        System.out.println("\n\n Environment "+R.toString());
         for (Location cell : R.cells()) {
             Type type = cell.getType();
             if (type.prohibitsWriting(lv)) {
@@ -1110,7 +1106,6 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         // Destructure
         Type type2 = Cx.getType();
         Lifetime m = Cx.getLifetime();
-        System.out.println("\n\n type 1 "+type2.toString());
         // Apply write
         Pair<Environment, Type> p = update(gam1, type2, path, 0, type1, strong);
         Environment gam2 = p.first();
@@ -1523,8 +1518,6 @@ protected boolean mut(Environment R, Lval w) {
         /** List all possible bindings. **/
         label:
         for(Map<String,Lifetime> suitable : generatebinding(abstractl,concretel)) {
-            System.out.println("\n\n taille of generated "+ generatebinding(abstractl,concretel).toString());
-
             for (int i = 0; i != arguments.length; ++i) {
                 Signature sith = parameters[i].second();
                 Type tith = arguments[i];
@@ -1532,8 +1525,6 @@ protected boolean mut(Environment R, Lval w) {
                     continue label;
                 }
             }
-            System.out.println("\n\n suitable "+ suitable.toString());
-            // Candidate Done!
            /*if (!suitable.isEmpty()){
                 System.out.println("\n\n isEmpty "+suitable.toString()+"\n\n\n");
            }*/
@@ -1730,7 +1721,6 @@ protected boolean mut(Environment R, Lval w) {
             Type.Borrow tb = (Type.Borrow) arg;
             Type.Clone _tb = new Type.Clone(tb.lvals());
             //
-            System.out.println("\n\n sb "+tb.lvals());
             if(sb.isMutable()){
                 Signature _sb = sb.getSignature();
                 if (_sb instanceof Signature.Trc){
@@ -1792,8 +1782,6 @@ protected boolean mut(Environment R, Lval w) {
             Type e = lift(sb.getSignature(), params, gam, lifetime, args);
             // Update targets with possible write
             for(Lval w : tb.lvals()) {
-              //  System.out.println("\n\n omega is "+w.toString());
-              //  System.out.println("\n\n type is "+sb.getSignature());
                 gam = write(gam, w, e, false);
             }
         }

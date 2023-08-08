@@ -1,6 +1,7 @@
 package fr.univorleans.mssl.DynamicSyntax;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class Syntax {
 
@@ -355,7 +356,17 @@ public class Syntax {
             }
 
             public void put(HashMap<String,Type> map){
-                this.variablesType=map;
+
+                if(this.variablesType.isEmpty()){
+                    this.variablesType=map;
+                }else {
+                    for (Map.Entry<String, Type> entry : map.entrySet()) {
+                        String key = entry.getKey();
+                        Type value = entry.getValue();
+                        this.variablesType.put(key, value);
+                    }
+                }
+
             }
 
             public HashMap<String, Type> variablesType(){

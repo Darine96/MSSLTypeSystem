@@ -20,6 +20,8 @@ public class BorrowCheckerFunction extends BorrowChecker{
 
     public HashMap<String, Type> map = new HashMap<>();
 
+   public ArrayList<Function> funcs;
+
     public BorrowCheckerFunction(boolean copyInference, String expression, List<Function> decls) {
         super(copyInference, expression, decls);
     }
@@ -34,22 +36,32 @@ public class BorrowCheckerFunction extends BorrowChecker{
      */
 
     public Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, ArrayList<Function> functions) throws ExceptionsMSG {
+        setFunctions(functions);
         for (int i=0;i!=functions.size();++i){
             HashMap<String, Type> _map = new HashMap<>();
             int k = functions.get(i).getK();
             apply(lifetime,functions.get(i), k);
             _map.putAll(map);
             functions.get(i).getBody().put(_map);
-            map.clear();
-        }
+            this.funcs.get(i).getBody().put(_map);
+            //map.clear();
+          }
         return new Pair<>(gam, Type.Unit);
     }
 
+    public void setFunctions(ArrayList<Function> functions) {
+        this.funcs = functions;
+    }
+
+    public ArrayList<Function> getFunctions() {
+        return this.funcs;
+    }
 
     protected void apply(Lifetime lifetime, Function function, int k) throws ExceptionsMSG {
         //(1) récuperer les parametres
         Pair<String, Signature>[] params = function.getParams();
         String[] signals = function.getSignals();
+        map.clear();
         /**
          * check the shape of the signatures
          */
@@ -75,9 +87,8 @@ public class BorrowCheckerFunction extends BorrowChecker{
             // put the resulting type into gam
             gam = gam.put(p, new Location(r.second(), newLft));
             /*** necessary to compileToC **/
-            envf = envf.put(p, new Location(r.second(), newLft));
-           // System.out.printf("\n\n\n environment "+envf);
-
+            //envf = envf.put(p, new Location(r.second(), newLft));
+            envf = gam;
             /** needed for free to compiletoC ***/
             map.put(p,r.second());
             }
@@ -88,7 +99,6 @@ public class BorrowCheckerFunction extends BorrowChecker{
             gam = gam.put(s, new Location(Type.Sig, newLft));
             /*** necessary to compileToC **/
             envf = envf.put(s, new Location(Type.Sig, newLft));
-            // System.out.printf("\n\n\n environment "+envf);
 
             /** needed for free to compiletoC ***/
             map.put(s,Type.Sig);
@@ -102,8 +112,13 @@ public class BorrowCheckerFunction extends BorrowChecker{
         //reinitialise
         BorrowChecker.global=EMPTY_ENVIRONMENT;
         envFunctions.put(function.getName(), envf);
+        for (int f = 0;f!=params.length;++f) {
+            String s = params[f].first();
+            Location t = p.first().get(s);
+            Type tt = t.getType();
+            function.getBody().variablesType().put(s, tt);
+        }
         //(6) Check type compatibility ( in our case we have not a return function)
-        //System.out.println("\n the type of the body "+ function.getRet() );
             try {
                 check(!function.getRet().isSubtype(p.first(),p.second(), suitable), "The type of the function is incompatible with the type of its body!");
             } catch (ExceptionsMSG e) {
