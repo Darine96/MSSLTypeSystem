@@ -748,7 +748,7 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
         //compare the arguments given by the parameters of the function
         Pair<String, Signature>[] parameters = declaration.getParams();
         Syntax.Expression[] arguments = expression.getArguments();
-        try {
+       try {
             check((parameters.length != arguments.length), "The number of arguments is incompatible with the number of parameters!");
         } catch (ExceptionsMSG e) {
             throw new RuntimeException(e);
@@ -833,13 +833,15 @@ public class BorrowChecker extends ReductionRule<Environment, Type, BorrowChecke
                     } catch (ExceptionsMSG e) {
                         throw new RuntimeException(e);
                     }
-            }else if((k==0 && declaration.getK() == 1)){
+            }else if(k == 1){
+                if(declaration.getK()==0) {
                     try {
 
                         check(true, "the effect k must be 1!");
                     } catch (ExceptionsMSG e) {
                         throw new RuntimeException(e);
                     }
+                }
             }
 
             //premise: verify if there exists two inactive trc pointing to the same memory location

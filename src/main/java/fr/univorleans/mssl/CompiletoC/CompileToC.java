@@ -848,20 +848,23 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
                 writer.print("\t"+name+"(");
                 String[] args = argumentsInvokefunction(((expression).getArguments()),signatures);
-                for (int i = 0;i!=args.length -1;++i){
-                    writer.print(args[i]+", " );
-                }
-                if (signals.length == 0) {
-                    writer.print(args[args.length -1]+")" );
-                }else {
-                    writer.print(args[args.length -1]+", " );
+                if(args.length!=0) {
+                    for (int i = 0; i != args.length - 1; ++i) {
+                        writer.print(args[i] + ", ");
+                    }
+                    if (signals.length == 0) {
+                        writer.print(args[args.length - 1] + ")");
+                    } else {
+                        writer.print(args[args.length - 1] + ", ");
+                    }
                 }
                     /*** signals ***/
-                for (int i = 0; i!=signals.length -1; ++i) {
-                    writer.print(signals[i]+", ");
+                if(signals.length!=0) {
+                    for (int i = 0; i != signals.length - 1; ++i) {
+                        writer.print(signals[i] + ", ");
+                    }
+                    writer.print(signals[signals.length - 1] + ")");
                 }
-                writer.print(signals[signals.length -1]+")" );
-
                 writer.close();
             } catch (IOException ie) {
                 System.out.println("An error occurred.");
