@@ -40,7 +40,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     private Lval currentLval=null;
     private boolean check_box=false;
     private boolean check_assign = false;
-
+    private boolean check_ifelse =false;
     private boolean check_function = false;
 
     private Lifetime lftMain = null;
@@ -283,7 +283,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         int count = lval.path().size();
         Location _l = env.get(lval.name());
         Type type = _l.getType().returnType(env, count);
-        boolean containsTrc = _l.getType().ContainsTrc(env);
+        boolean containsTrc = _l.getType().ContainsTrcType(env);
       //  Pair<Type,Lifetime> p = lval.typeOf(env);
         //boolean containsTrc = type.ContainsTrc(env);
         /**
@@ -301,7 +301,6 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         if(containsTrc){
             // if the type contient un trc
             // then, if this lval is a dereference; make sure that if we travers a trc
-
             // make sure if we travers a trc
             if(pos == 1 && !(_l.getType() instanceof Type.Trc)){
                 containsTrc = false;
@@ -480,9 +479,9 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         final int n = expression.getExprs().length;
         Syntax.Expression e = null;
         if(!check_function) {
-            if(check_box){
+            if(check_box && !check_ifelse){
                 check_box=false;
-            }else{
+                }else{
                 try {
                     PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
 
@@ -497,7 +496,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         }
         check_function=false;
         for(int i = 0; i!= n;++i){
-            if(i == n-1){
+            if(i == n-1 && expression.getExprs()[i] instanceof Expression.Access){
                 // needed to write return
                 blockvariables= expression.variablesType();
                 lasteexpression = true;
@@ -733,9 +732,12 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
     @Override
     protected Expression apply(Expression.Conditional expression) {
         apply(expression.lftoperand);
+        Expression e = expression.lftoperand;
+        String deref = condition(e);
+        /*************************************************************/
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            writer.println(expression.operator);
+            writer.println(deref+" "+expression.operator);
             writer.close();
         } catch (IOException ie) {
             System.out.println("An error occurred.");
@@ -747,11 +749,23 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
 
     @Override
     protected Expression apply(Expression.IfElse expression) {
-        String s = expression.getConditions().toString();
+        check_ifelse = true;
+        Expression cond = expression.getConditions();
+        //String s = expression.getConditions().toString();
+        String s = null;
+        /*********************************************/
+        if(cond instanceof Expression.Conditional){
+            String lft = condition(((Expression.Conditional) cond).lftoperand);
+            String rght = condition(((Expression.Conditional) cond).rghtoperand);
+            s = lft+((Expression.Conditional) cond).operator.toString()+rght;
+        }else {
+            s = expression.getConditions().toString();
+        }
+        /***********************************************/
         String _s = s.replace("^", "");
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(filename, true));
-            writer.print("\tif("+_s+")");
+            writer.println("\tif("+_s+")");
             writer.close();
         } catch (IOException ie) {
             System.out.println("An error occurred.");
@@ -767,6 +781,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             ie.printStackTrace();
         }
         apply(expression.getElseblock());
+        check_ifelse = false;
         return null;
     }
 
@@ -836,7 +851,17 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
                 for (int i = 0;i!=args.length -1;++i){
                     writer.print(args[i]+", " );
                 }
-                writer.print(args[args.length -1]+")" );
+                if (signals.length == 0) {
+                    writer.print(args[args.length -1]+")" );
+                }else {
+                    writer.print(args[args.length -1]+", " );
+                }
+                    /*** signals ***/
+                for (int i = 0; i!=signals.length -1; ++i) {
+                    writer.print(signals[i]+", ");
+                }
+                writer.print(signals[signals.length -1]+")" );
+
                 writer.close();
             } catch (IOException ie) {
                 System.out.println("An error occurred.");
@@ -1061,6 +1086,7 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
         Pair<Type,Lifetime> typing_omega = v.typeOf(env);
         String lval = expression.operand().toString();
         String s = lval;
+
         if(lasteexpression) {
             if(lval.contains("*")){
                     // is a dereference into box
@@ -1576,6 +1602,41 @@ public class CompileToC extends ToCRules<ToCRules.ExtensionToC>{
             }
         }
         return args;
+    }
+    /****************************************************************/
+    public String condition(Expression e){
+        String deref = null;
+        Lval lval=null;
+        /*************************************************************/
+        if(e instanceof Expression.Borrow){
+             lval = ((Expression.Borrow) e).getOperand();
+            int count = lval.path().size();
+            Location _l = env.get(lval.name());
+            Type type = _l.getType().returnType(env, count);
+            boolean containsTrc = _l.getType().ContainsTrcType(env);
+            // compute the position of the trc
+            int pos = _l.getType().positionTrc(env);
+            if(containsTrc){
+                // if the type contient un trc
+                // then, if this lval is a dereference; make sure that if we travers a trc
+                // make sure if we travers a trc
+                if(pos == 1 && !(_l.getType() instanceof Type.Trc)){
+                    deref ="*".repeat(count) + lval.name();
+
+                }else {
+                    if (count != 0 && pos > 0 && pos <= count) {
+                        containsTrc = false;
+                        deref ="*".repeat(count - (pos - 1)) + "((int " + "*".repeat(_l.getType().refcount(env) - (pos - 1)) + ")_get_value(" + "*".repeat(pos - 1) + lval.name() + "))";
+                    }
+                }
+            }else{
+                deref ="*".repeat(count) + lval.name();
+            }
+
+        }else {
+            deref = e.toString();
+        }
+        return deref;
     }
     /***************************************************************/
     public abstract static class ExtensionToC implements ToCRules.ExtensionToC {

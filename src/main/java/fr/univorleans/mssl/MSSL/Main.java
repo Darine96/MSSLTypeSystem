@@ -80,10 +80,10 @@ public class Main {
                 typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block, 0);
                 /*******************************************************/
                 /**************** Semantics and reduction rules ********/
-                OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
+                /*OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
                 Pair<StoreProgram.State, Expression> state = new Pair<>(new StoreProgram.State(),visitor.block);
                 Expression result = new OperationalSemantics(globalLifetime, opf.getFunctions()).execute(globalLifetime, state.second(), 0);
-
+                */
                 /*****************************************************************/
                 /**************** Compiler To C to execute in fairthreads ********/
                 CompileToC compileToC = new CompileToC(typingFunction.getFunctions(), typingFunction.getEnvFunctions(), typing.getGlobal(), getNBthreads() );

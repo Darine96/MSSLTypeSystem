@@ -65,6 +65,7 @@ public class StoreProgram {
          * @return
          */
         public Reference locate(String name, Lifetime l) {
+            System.out.println("\n\n nameeeeeeeeee "+name);
             return stack.get(name, l);
         }
         /**

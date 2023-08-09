@@ -38,14 +38,14 @@ public class BorrowCheckerFunction extends BorrowChecker{
     public Pair<Environment, Type> apply(Environment gam, Lifetime lifetime, ArrayList<Function> functions) throws ExceptionsMSG {
         setFunctions(functions);
         for (int i=0;i!=functions.size();++i){
-            HashMap<String, Type> _map = new HashMap<>();
             int k = functions.get(i).getK();
             apply(lifetime,functions.get(i), k);
-            _map.putAll(map);
-            functions.get(i).getBody().put(_map);
-            this.funcs.get(i).getBody().put(_map);
+           // HashMap<String, Type> _map = new HashMap<>(map);
+           // functions.get(i).getBody().put(_map);
+            this.funcs.get(i).getBody().put(new HashMap<>(map));
             //map.clear();
-          }
+            }
+
         return new Pair<>(gam, Type.Unit);
     }
 

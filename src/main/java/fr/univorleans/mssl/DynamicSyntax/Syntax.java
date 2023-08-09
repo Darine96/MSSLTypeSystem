@@ -358,7 +358,7 @@ public class Syntax {
             public void put(HashMap<String,Type> map){
 
                 if(this.variablesType.isEmpty()){
-                    this.variablesType=map;
+                    this.variablesType=new HashMap<>(map);
                 }else {
                     for (Map.Entry<String, Type> entry : map.entrySet()) {
                         String key = entry.getKey();
