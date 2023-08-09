@@ -1,0 +1,30 @@
+fn f1(mut x: trc<int>)->0 unit{
+    let mut a = &mut *x;
+    *a=1;
+    print!(*x);
+    //
+    *a=1;
+    print!(*x);
+}
+
+fn f2(mut x: trc<int>; s1)->1 unit{
+    when(s1){
+        if(*x == 2){
+            print!(*x);
+        }else{};
+    }
+}
+
+fn f3(; s1)->1 unit{
+    cooperate;
+    emit(s1);
+}
+
+//main
+{
+    let mut x = trc(0);
+    Sig s1;
+    spawn(f1(x.clone));
+    spawn(f2(x.clone; s1));
+    spawn(f3(;s1));
+}

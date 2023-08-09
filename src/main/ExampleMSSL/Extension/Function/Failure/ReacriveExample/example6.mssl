@@ -1,0 +1,27 @@
+fn f1(;s1) ->1 int{
+    cooperate;
+
+    let mut s = 1;
+    s;
+}
+
+fn f2(mut x: trc<int>; s1) ->1 unit{
+    let mut a = &mut *x;
+    f1(;s1);
+
+    **a = 1;
+    cooperate;
+}
+
+fn f3(mut x: trc<int>) ->0 unit{
+         print!(*x);
+     }
+
+//main
+{
+    let mut x = trc(0);
+    Sig s1;
+    spawn(f2(x.clone;s1));
+    spawn(f3(x.clone));
+
+}

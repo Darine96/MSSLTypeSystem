@@ -1,0 +1,13 @@
+fn f1(mut x: box<trc<int>>) ->1 unit{
+    let mut y = *x.clone;
+    cooperate;
+    *x= trc(1);
+}
+
+//main
+{
+    let mut x = box(trc(0));
+    let mut y = trc(0);
+    *x = y.clone;
+    spawn(f1(x));
+}
