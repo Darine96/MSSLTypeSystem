@@ -1,0 +1,26 @@
+fn f2(mut x: trc<int>, mut y: trc<int>; s1, s2)->1 unit{
+    watch(s1){
+        when(s2){
+            *y = 5;
+            print!(*y);
+        }
+    }
+    print!(*y);
+}
+
+fn f1(mut x: trc<int>, mut y: &'a mut clone<int>; s1,s2)->1 unit{
+    let mut a = x.clone;
+    let mut b = *y;
+    spawn(f2(a,b; s1,s2));
+    cooperate;
+    emit(s1);
+}
+
+//main
+{
+    let mut x = trc(0);
+    let mut y = trc(0);
+    Sig s1;
+    Sig s2;
+    spawn(f1(x.clone,&mut y; s1,s2));
+}

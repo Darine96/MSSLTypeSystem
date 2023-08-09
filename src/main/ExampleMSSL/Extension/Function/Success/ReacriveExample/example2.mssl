@@ -1,0 +1,32 @@
+fn bar(mut x:trc<int>, mut y:trc<int>)->1 unit{
+        {
+            let mut a = &mut *x;
+            *a = 5;
+        }
+        cooperate;
+        print!(*x);
+}
+
+fn foo(mut x: trc<int>, mut y:box<trc<int>>) ->1 unit{
+    *x = 1;
+    cooperate;
+    spawn(bar(x.clone,*y.clone));
+    cooperate;
+    print!(*x);
+}
+
+fn foofoo(mut x: trc<int>)->1 unit{
+    {
+        let mut y = &mut x;
+        **y = 2;
+    }
+    cooperate;
+}
+
+//main
+{
+    let mut x = trc(0);
+    let mut y = trc(0);
+   spawn(foo(x.clone, box(y.clone)));
+    spawn(foofoo(x.clone));
+}

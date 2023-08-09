@@ -1,6 +1,6 @@
-fn f1(mut x: trc<int>; s1)->unit{
+fn f1(mut x: trc<int>; s1)->1 unit{
     Sig s;
-    emit(s);
+    emit(s1);
     when(s){}
 }
 

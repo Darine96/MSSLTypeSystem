@@ -1,0 +1,47 @@
+//th3
+fn f3(mut x : box<trc<int>>; s1,s2)->1 unit{
+    watch(s1){
+        when(s2){
+            let mut a = &mut *x;
+            **a = 1;
+            cooperate;
+        }
+    }
+}
+
+
+//th1
+fn f1(mut x : trc<int>; s1,s2)->1 unit{
+    watch(s2){
+        when(s1){
+            *x=1;
+        }
+
+        cooperate;
+        let mut y = x.clone;
+        spawn(f3(box(y);s1,s2));
+        cooperate;
+        emit(s1);
+    }
+
+}
+
+//th2
+fn f2(mut x: trc<int>; s1, s2) ->1 unit {
+    let mut y = 1;
+    if(&*x == &y){
+        emit(s2);
+    }else{
+        emit(s1);
+        cooperate;
+   };
+
+}
+
+//main
+{
+    let mut x = trc(0);
+    Sig s1; Sig s2;
+   // spawn(f1(x.clone;s1,s2));
+    spawn(f2(x.clone;s1,s2));
+}

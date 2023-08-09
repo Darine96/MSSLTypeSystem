@@ -1,0 +1,23 @@
+fn bar(mut x:trc<int>, mut y:box<trc<int>>)->1 unit{
+        let mut a = *y.clone;
+        cooperate;
+        let mut b = *y;
+        spawn(foofoo(b.clone));
+}
+
+fn foo(mut x: trc<int>) ->1 unit{
+  let mut y = x.clone;
+  spawn(bar(x.clone,box(y)));
+  cooperate;
+  *x = 7;
+}
+
+fn foofoo(mut x: trc<int>)->1 unit{
+// add code
+}
+
+//main
+{
+    let mut x = trc(0);
+   spawn(foo(x.clone));
+}
