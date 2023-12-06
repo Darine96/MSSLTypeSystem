@@ -77,7 +77,7 @@ public class Main {
                 int functionNBthreads = getNBthreads();
                 BorrowChecker typing =  new BorrowChecker(false, "Declaration", visitor.declarations);
                 //System.out.printf("\n block "+ block.toString());
-                typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, globalLifetime, block, 0);
+                typing.apply(BorrowChecker.EMPTY_ENVIRONMENT, block.getLifetime(), block, 0);
                 /*******************************************************/
                 /**************** Semantics and reduction rules ********/
                 /*OperationalSemanticsFunction opf = new OperationalSemanticsFunction(visitor.declarations);
